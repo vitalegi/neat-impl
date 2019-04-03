@@ -11,11 +11,11 @@ import org.springframework.stereotype.Component;
 @Profile("!test")
 public class NeatRunner implements ApplicationRunner {
 
+	Logger log = LoggerFactory.getLogger(NeatRunner.class);
+
 	@Override
 	public void run(ApplicationArguments args) throws Exception {
 		log.info("Startup");
 
 	}
-
-	Logger log = LoggerFactory.getLogger(NeatRunner.class);
 }

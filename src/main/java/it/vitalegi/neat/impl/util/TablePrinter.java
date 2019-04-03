@@ -5,21 +5,41 @@ import java.util.List;
 
 public class TablePrinter {
 
-	private Row headers;
-	private List<Row> rows;
+	private class Row {
 
+		List<String> values;
+
+		public Row(List<String> values) {
+			this.values = values;
+		}
+	}
 	public static TablePrinter newPrinter() {
 		TablePrinter printer = new TablePrinter();
 		printer.rows = new ArrayList<>();
 		return printer;
 	}
 
-	public void setHeaders(List<String> headers) {
-		this.headers = new Row(headers);
-	}
+	private Row headers;
+
+	private List<Row> rows;
 
 	public void addRow(List<String> row) {
 		rows.add(new Row(row));
+	}
+
+	private void computeWidths(int[] widths, Row row) {
+		for (int i = 0; i < widths.length; i++) {
+			if (widths[i] < row.values.get(i).length()) {
+				widths[i] = row.values.get(i).length();
+			}
+		}
+	}
+
+	private int[] getWidths() {
+		int[] widths = new int[headers.values.size()];
+		computeWidths(widths, headers);
+		rows.forEach(r -> computeWidths(widths, r));
+		return widths;
 	}
 
 	public StringBuilder print() {
@@ -31,21 +51,6 @@ public class TablePrinter {
 		rows.forEach(r -> sb.append(print(r, widths)).append("\n"));
 		sb.append(printHorizontalBar(widths)).append("\n");
 		return sb;
-	}
-
-	private int[] getWidths() {
-		int[] widths = new int[headers.values.size()];
-		computeWidths(widths, headers);
-		rows.forEach(r -> computeWidths(widths, r));
-		return widths;
-	}
-
-	private void computeWidths(int[] widths, Row row) {
-		for (int i = 0; i < widths.length; i++) {
-			if (widths[i] < row.values.get(i).length()) {
-				widths[i] = row.values.get(i).length();
-			}
-		}
 	}
 
 	private String print(Row row, int[] widths) {
@@ -70,12 +75,7 @@ public class TablePrinter {
 		return sb.toString();
 	}
 
-	private class Row {
-
-		List<String> values;
-
-		public Row(List<String> values) {
-			this.values = values;
-		}
+	public void setHeaders(List<String> headers) {
+		this.headers = new Row(headers);
 	}
 }

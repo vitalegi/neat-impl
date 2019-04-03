@@ -12,12 +12,12 @@ public class DummyPlayerFactory implements PlayerFactory {
 		return p;
 	}
 
-	public void setFitness(double fitness) {
-		this.fitness = fitness;
-	}
-
 	public Player newPlayer(Gene gene, double fitness) {
 		setFitness(fitness);
 		return newPlayer(gene);
+	}
+
+	public void setFitness(double fitness) {
+		this.fitness = fitness;
 	}
 }

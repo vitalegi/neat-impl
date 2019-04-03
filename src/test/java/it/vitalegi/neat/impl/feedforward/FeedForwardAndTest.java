@@ -20,12 +20,23 @@ import it.vitalegi.neat.impl.UniqueId;
 @ActiveProfiles("test")
 public class FeedForwardAndTest {
 
-	Gene gene;
-	UniqueId uniqueId;
-
 	@BeforeClass
 	public static void initClass() {
 		Random.init();
+	}
+	Gene gene;
+
+	Logger log = LoggerFactory.getLogger(FeedForwardAndTest.class);
+
+	UniqueId uniqueId;
+
+	private void bool(String name, Gene gene, int in1, int in2, int out) {
+		String desc = name + "(" + in1 + "," + in2 + ") = " + out;
+		log.info("Start {}", desc);
+		double[] outputs = new FeedForward(gene).feedForward(new double[] { in1, in2 });
+		log.info("End {}", desc);
+		int o = outputs[0] > 0.9 ? 1 : 0;
+		Assert.assertEquals(desc, out, o);
 	}
 
 	@Before
@@ -55,15 +66,4 @@ public class FeedForwardAndTest {
 	public void testAnd11() {
 		bool("And", gene, 1, 1, 1);
 	}
-
-	private void bool(String name, Gene gene, int in1, int in2, int out) {
-		String desc = name + "(" + in1 + "," + in2 + ") = " + out;
-		log.info("Start {}", desc);
-		double[] outputs = new FeedForward(gene).feedForward(new double[] { in1, in2 });
-		log.info("End {}", desc);
-		int o = outputs[0] > 0.9 ? 1 : 0;
-		Assert.assertEquals(desc, out, o);
-	}
-
-	Logger log = LoggerFactory.getLogger(FeedForwardAndTest.class);
 }

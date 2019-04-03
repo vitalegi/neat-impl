@@ -21,6 +21,8 @@ public class FeedForward {
 	Gene gene;
 	Map<Long, GraphNode> graph;
 
+	Logger log = LoggerFactory.getLogger(FeedForward.class);
+
 	public FeedForward(Gene gene) {
 		this.gene = gene;
 	}
@@ -68,60 +70,6 @@ public class FeedForward {
 		return outputs;
 	}
 
-	protected Map<Long, GraphNode> initGraph() {
-		graph = new HashMap<>();
-
-		List<Connection> connections = gene.getConnections();
-
-		// init nodes
-		connections.stream().forEach(c -> {
-			initIfNotExists(c.getFromNode());
-			initIfNotExists(c.getToNode());
-		});
-
-		// create connections
-		connections.stream().forEach(c -> {
-			GraphNode fromNode = graph.get(c.getFromNode().getId());
-			fromNode.addSuccessor(new GraphConnection(graph.get(c.getToNode().getId()), c.getWeight()));
-		});
-		return graph;
-	}
-
-	protected void initIfNotExists(Node node) {
-		initIfNotExists(node.getId());
-	}
-
-	protected void initIfNotExists(long id) {
-		if (!graph.containsKey(id)) {
-			graph.put(id, new GraphNode(id));
-		}
-	}
-
-	protected void initInputConnections(List<Long> inputNodes, double[] inputs) {
-
-		for (int i = 0; i < inputNodes.size(); i++) {
-			Long nodeId = inputNodes.get(i);
-			double nodeWeight = inputs[i];
-			GraphNode node = graph.get(nodeId);
-			node.setInputsSum(nodeWeight);
-		}
-	}
-
-	protected String graphToString() {
-		StringBuilder sb = new StringBuilder();
-		List<Long> nodeIds = getNodesInFeedingOrder();
-		nodeIds.forEach(nodeId -> {
-			GraphNode node = graph.get(nodeId);
-
-			sb.append(node.getId()).append(" ")//
-					.append("in:").append(format(node.getInputsSum())).append(" ")//
-					.append("out:").append(format(node.getOutputValue())).append(" ")//
-					.append("sig:").append(format(node.calculateOutputValue()))//
-					.append(node.allInputsReceived() ? "*" : "").append(", ");
-		});
-		return sb.toString();
-	}
-
 	private String format(double value) {
 		return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).toPlainString();
 	}
@@ -153,6 +101,58 @@ public class FeedForward {
 		return nodes;
 	}
 
-	Logger log = LoggerFactory.getLogger(FeedForward.class);
+	protected String graphToString() {
+		StringBuilder sb = new StringBuilder();
+		List<Long> nodeIds = getNodesInFeedingOrder();
+		nodeIds.forEach(nodeId -> {
+			GraphNode node = graph.get(nodeId);
+
+			sb.append(node.getId()).append(" ")//
+					.append("in:").append(format(node.getInputsSum())).append(" ")//
+					.append("out:").append(format(node.getOutputValue())).append(" ")//
+					.append("sig:").append(format(node.calculateOutputValue()))//
+					.append(node.allInputsReceived() ? "*" : "").append(", ");
+		});
+		return sb.toString();
+	}
+
+	protected Map<Long, GraphNode> initGraph() {
+		graph = new HashMap<>();
+
+		List<Connection> connections = gene.getConnections();
+
+		// init nodes
+		connections.stream().forEach(c -> {
+			initIfNotExists(c.getFromNode());
+			initIfNotExists(c.getToNode());
+		});
+
+		// create connections
+		connections.stream().forEach(c -> {
+			GraphNode fromNode = graph.get(c.getFromNode().getId());
+			fromNode.addSuccessor(new GraphConnection(graph.get(c.getToNode().getId()), c.getWeight()));
+		});
+		return graph;
+	}
+
+	protected void initIfNotExists(long id) {
+		if (!graph.containsKey(id)) {
+			graph.put(id, new GraphNode(id));
+		}
+	}
+
+	protected void initIfNotExists(Node node) {
+		initIfNotExists(node.getId());
+	}
+
+	protected void initInputConnections(List<Long> inputNodes, double[] inputs) {
+
+		for (int i = 0; i < inputNodes.size(); i++) {
+			Long nodeId = inputNodes.get(i);
+			double nodeWeight = inputs[i];
+			GraphNode node = graph.get(nodeId);
+			node.setInputsSum(nodeWeight);
+		}
+	}
 
 }

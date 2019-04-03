@@ -4,14 +4,14 @@ public class Random {
 
 	private static java.util.Random random;
 
-	public static void init() {
-		random = new java.util.Random();
-	}
-
 	private static void checkInit() {
 		if (random == null) {
 			init();
 		}
+	}
+
+	public static void init() {
+		random = new java.util.Random();
 	}
 
 	public static boolean nextBoolean() {

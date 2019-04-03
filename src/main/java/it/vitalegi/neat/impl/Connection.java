@@ -2,19 +2,6 @@ package it.vitalegi.neat.impl;
 
 public class Connection {
 
-	private long id;
-	private Node fromNode;
-	private Node toNode;
-	private boolean enabled;
-	private double weight;
-
-	public static Connection newInstance(UniqueId uniqueId, Node fromNode, Node toNode, double weight,
-			boolean enabled) {
-
-		return newInstance(uniqueId, uniqueId.nextConnectionId(fromNode.getId(), toNode.getId()), fromNode, toNode,
-				weight, enabled);
-	}
-
 	public static Connection newInstance(UniqueId uniqueId, long id, Node fromNode, Node toNode, double weight,
 			boolean enabled) {
 
@@ -26,35 +13,34 @@ public class Connection {
 		con.setEnabled(enabled);
 		return con;
 	}
+	public static Connection newInstance(UniqueId uniqueId, Node fromNode, Node toNode, double weight,
+			boolean enabled) {
 
-	@Override
-	public String toString() {
-		return "Connection [id=" + id + ", fromNode=" + fromNode + ", toNode=" + toNode + ", enabled=" + enabled
-				+ ", weight=" + weight + "]";
+		return newInstance(uniqueId, uniqueId.nextConnectionId(fromNode.getId(), toNode.getId()), fromNode, toNode,
+				weight, enabled);
+	}
+	private boolean enabled;
+	private Node fromNode;
+	private long id;
+
+	private Node toNode;
+
+	private double weight;
+
+	public Node getFromNode() {
+		return fromNode;
 	}
 
 	public long getId() {
 		return id;
 	}
 
-	public void setId(long id) {
-		this.id = id;
-	}
-
-	public Node getFromNode() {
-		return fromNode;
-	}
-
-	public void setFromNode(Node fromNode) {
-		this.fromNode = fromNode;
-	}
-
 	public Node getToNode() {
 		return toNode;
 	}
 
-	public void setToNode(Node toNode) {
-		this.toNode = toNode;
+	public double getWeight() {
+		return weight;
 	}
 
 	public boolean isEnabled() {
@@ -65,12 +51,26 @@ public class Connection {
 		this.enabled = enabled;
 	}
 
-	public double getWeight() {
-		return weight;
+	public void setFromNode(Node fromNode) {
+		this.fromNode = fromNode;
+	}
+
+	public void setId(long id) {
+		this.id = id;
+	}
+
+	public void setToNode(Node toNode) {
+		this.toNode = toNode;
 	}
 
 	public void setWeight(double weight) {
 		this.weight = weight;
+	}
+
+	@Override
+	public String toString() {
+		return "Connection [id=" + id + ", fromNode=" + fromNode + ", toNode=" + toNode + ", enabled=" + enabled
+				+ ", weight=" + weight + "]";
 	}
 
 }

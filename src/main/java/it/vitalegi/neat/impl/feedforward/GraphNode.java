@@ -7,13 +7,13 @@ import it.vitalegi.neat.impl.function.SigmoidFunction;
 
 public class GraphNode {
 
+	private int actualInputs;
+	private int expectedInputs;
+	private boolean feededSuccessors;
 	private long id;
-	private List<GraphConnection> to;
 	private double inputsSum;
 	private double outputValue;
-	private int expectedInputs;
-	private int actualInputs;
-	private boolean feededSuccessors;
+	private List<GraphConnection> to;
 
 	public GraphNode(long id) {
 		this.id = id;
@@ -25,21 +25,22 @@ public class GraphNode {
 		feededSuccessors = false;
 	}
 
-	public long getId() {
-		return id;
-	}
-
 	public void addSuccessor(GraphConnection connection) {
 		to.add(connection);
 	}
 
-	protected boolean isPredecessor(long id) {
-		return to.stream().map(GraphConnection::getToNode).map(GraphNode::getId)//
-				.anyMatch(toId -> toId == id);
-	}
-
 	public boolean allInputsReceived() {
 		return actualInputs >= expectedInputs;
+	}
+
+	public double calculateOutputValue() {
+		return SigmoidFunction.customSigmoid(inputsSum);
+	}
+
+	public void feed(double value) {
+		inputsSum += value;
+		outputValue = calculateOutputValue();
+		actualInputs++;
 	}
 
 	public void feedSuccessors() {
@@ -53,15 +54,8 @@ public class GraphNode {
 		to.forEach(c -> c.getToNode().feed(c.getWeight() * outputValue));
 	}
 
-	public void setInputsSum(double value) {
-		inputsSum = value;
-		outputValue = value;
-	}
-
-	public void feed(double value) {
-		inputsSum += value;
-		outputValue = calculateOutputValue();
-		actualInputs++;
+	public long getId() {
+		return id;
 	}
 
 	public double getInputsSum() {
@@ -72,7 +66,13 @@ public class GraphNode {
 		return outputValue;
 	}
 
-	public double calculateOutputValue() {
-		return SigmoidFunction.customSigmoid(inputsSum);
+	protected boolean isPredecessor(long id) {
+		return to.stream().map(GraphConnection::getToNode).map(GraphNode::getId)//
+				.anyMatch(toId -> toId == id);
+	}
+
+	public void setInputsSum(double value) {
+		inputsSum = value;
+		outputValue = value;
 	}
 }

@@ -6,12 +6,6 @@ import it.vitalegi.neat.impl.Player;
 
 public class SharedFitnessValue {
 
-	public static double getFitness(Player player, int speciesSize) {
-		double fi = player.getFitness();
-
-		return fi / speciesSize;
-	}
-
 	public static double getFitness(CompatibilityDistance compatibilityDistance, List<Player> players, int i) {
 		Player player = players.get(i);
 		double fi = player.getFitness();
@@ -22,6 +16,12 @@ public class SharedFitnessValue {
 		}
 		// p(i) e' compatibile con se' stesso, quindi sum >= 1
 		return fi / sumSharingFunction;
+	}
+
+	public static double getFitness(Player player, int speciesSize) {
+		double fi = player.getFitness();
+
+		return fi / speciesSize;
 	}
 
 	protected static double sharingFunction(CompatibilityDistance compatibilityDistance, Player player1,

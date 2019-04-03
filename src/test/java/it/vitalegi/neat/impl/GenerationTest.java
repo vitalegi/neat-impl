@@ -26,42 +26,21 @@ import it.vitalegi.neat.impl.function.CompatibilityDistanceImpl;
 @ActiveProfiles("test")
 public class GenerationTest {
 
-	Generation generation;
-	DummyPlayerFactory playerFactory;
-
 	@BeforeClass
 	public static void initClass() {
 		Random.init();
 	}
 
+	Generation generation;
+
+	Logger log = LoggerFactory.getLogger(GenerationTest.class);
+
+	DummyPlayerFactory playerFactory;
+
 	@Before
 	public void init() {
 		playerFactory = new DummyPlayerFactory();
-		generation = new Generation(playerFactory, 0, null);
-	}
-
-	@Test
-	public void testIsYoungIf14GenOld() {
-		generation.setGenNumber(30);
-		Species species = Species.newInstance(0, 16, null);
-		generation.addSpecies(species);
-		Assert.assertTrue(generation.isYoung(species));
-	}
-
-	@Test
-	public void testIsYoungIf15GenOld() {
-		generation.setGenNumber(30);
-		Species species = Species.newInstance(0, 15, null);
-		generation.addSpecies(species);
-		Assert.assertTrue(generation.isYoung(species));
-	}
-
-	@Test
-	public void testIsYoungIf16GenOld() {
-		generation.setGenNumber(30);
-		Species species = Species.newInstance(0, 14, null);
-		generation.addSpecies(species);
-		Assert.assertFalse(generation.isYoung(species));
+		generation = new Generation(new UniqueId(), playerFactory, 0, null);
 	}
 
 	@Test
@@ -81,56 +60,14 @@ public class GenerationTest {
 	}
 
 	@Test
-	public void testGetSpeciesToPreserveShouldPreserveYoungSpecies() {
-
-		generation.setGenNumber(5);
-		Species species1 = Species.newInstance(100, 6, null);
-		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 10));
-		generation.addSpecies(species1);
-		Assert.assertTrue(generation.getSpeciesToPreserve().stream().anyMatch(s -> s.getId() == 100));
-	}
-
-	@Test
-	public void testGetSpeciesToPreserveShouldPreserveGrowthSpecies() {
-
-		generation.setGenNumber(16);
-		Species species1 = Species.newInstance(100, 0, null);
-		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 10));
-		generation.addSpecies(species1);
-		for (int i = 0; i <= 16; i++) {
-			species1.addFitness(i);
-		}
-		Assert.assertEquals(0, species1.getFitness(0), 0.01);
-		Assert.assertEquals(1, species1.getFitness(1), 0.01);
-		Assert.assertEquals(16, species1.getFitness(16), 0.01);
-		Assert.assertTrue(generation.getSpeciesToPreserve().stream().anyMatch(s -> s.getId() == 100));
-	}
-
-	@Test
-	public void testGetCompatibleSpeciesIfNoSpecies() {
-		CompatibilityDistance cd = Mockito.mock(CompatibilityDistance.class);
-		generation.setCompatibilityDistance(cd);
-		Gene gene1 = Gene.newInstance(generation.getUniqueId());
-		Player player1 = playerFactory.newPlayer(gene1);
-
-		Assert.assertNull(generation.getCompatibleSpecies(player1));
-	}
-
-	@Test
-	public void testGetCompatibleSpeciesIfNoCompatibleSpecies() {
-		CompatibilityDistance cd = Mockito.mock(CompatibilityDistance.class);
-		generation.setCompatibilityDistance(cd);
-		Gene gene1 = Gene.newInstance(generation.getUniqueId());
-		Player player1 = playerFactory.newPlayer(gene1);
-		Gene gene2 = Gene.newInstance(generation.getUniqueId());
-		Player player2 = playerFactory.newPlayer(gene2);
-
-		Mockito.when(cd.isCompatible(gene1, gene2)).thenReturn(false);
-		Mockito.when(cd.isCompatible(gene2, gene1)).thenReturn(false);
-		Species species1 = Species.newInstance(1, 0, cd);
-		generation.addSpecies(species1);
-		generation.addPlayer(player1, species1);
-		Assert.assertNull(generation.getCompatibleSpecies(player2));
+	public void testGenerationInitializer() {
+		Generation gen = Generation.createGen0(playerFactory, 2, 1, 5, new CompatibilityDistanceImpl(0.1, 1, 2));
+		log.info(gen.stringify());
+		Gene gene2 = Gene.newInstance(generation.getUniqueId(), 2, 1);
+		gene2.addConnection(gene2.getSortedInputNodes().get(0), gene2.getSortedOutputNodes().get(0), 1, true);
+		gene2.addConnection(gene2.getSortedInputNodes().get(1), gene2.getSortedOutputNodes().get(0), 1, true);
+		gen.addPlayer(playerFactory.newPlayer(gene2));
+		log.info(gen.stringify());
 	}
 
 	@Test
@@ -183,59 +120,30 @@ public class GenerationTest {
 	}
 
 	@Test
-	public void testPreserveSpeciesShouldCreateSpecies() {
-		CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
+	public void testGetCompatibleSpeciesIfNoCompatibleSpecies() {
+		CompatibilityDistance cd = Mockito.mock(CompatibilityDistance.class);
+		generation.setCompatibilityDistance(cd);
+		Gene gene1 = Gene.newInstance(generation.getUniqueId());
+		Player player1 = playerFactory.newPlayer(gene1);
+		Gene gene2 = Gene.newInstance(generation.getUniqueId());
+		Player player2 = playerFactory.newPlayer(gene2);
 
-		Generation targetGen = new Generation(playerFactory, 1, cd);
-
-		Gene gene = Gene.newInstance(generation.getUniqueId(), 2, 1);
-		gene.addConnection(gene.getSortedInputNodes().get(0), gene.getSortedOutputNodes().get(0), 1, true);
-		gene.addConnection(gene.getSortedInputNodes().get(1), gene.getSortedOutputNodes().get(0), 1, true);
-
-		Species oldSpecies = Species.newInstance(1, 0, cd);
-
-		targetGen.preserveSpecies(oldSpecies, gene);
-		Assert.assertEquals(1, targetGen.getSpecies().size());
-		Assert.assertEquals(oldSpecies.getId(), targetGen.getSpecies().get(0).getId());
-
+		Mockito.when(cd.isCompatible(gene1, gene2)).thenReturn(false);
+		Mockito.when(cd.isCompatible(gene2, gene1)).thenReturn(false);
+		Species species1 = Species.newInstance(1, 0, cd);
+		generation.addSpecies(species1);
+		generation.addPlayer(player1, species1);
+		Assert.assertNull(generation.getCompatibleSpecies(player2));
 	}
 
 	@Test
-	public void testPreserveSpeciesShouldCopyChampionIfRelevantSpecies() {
-		CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
+	public void testGetCompatibleSpeciesIfNoSpecies() {
+		CompatibilityDistance cd = Mockito.mock(CompatibilityDistance.class);
+		generation.setCompatibilityDistance(cd);
+		Gene gene1 = Gene.newInstance(generation.getUniqueId());
+		Player player1 = playerFactory.newPlayer(gene1);
 
-		Generation targetGen = new Generation(playerFactory, 1, cd);
-
-		Gene gene = Mockito.mock(Gene.class);
-
-		Species oldSpecies = new Species(1, 0, cd) {
-			public boolean isRelevantSpecies() {
-				return true;
-			}
-		};
-
-		targetGen.preserveSpecies(oldSpecies, gene);
-		Mockito.verify(gene, Mockito.times(0)).mutate(Generation.MUTATE_NODE_PROBABILITY,
-				Generation.MUTATE_CONNECTION_PROBABILITY, Generation.MUTATE_ENABLE_PROBABILITY);
-	}
-
-	@Test
-	public void testPreserveSpeciesShouldMutateChampionIfIrrelevantSpecies() {
-		CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
-
-		Generation targetGen = new Generation(playerFactory, 1, cd);
-
-		Gene gene = Mockito.mock(Gene.class);
-
-		Species oldSpecies = new Species(1, 0, cd) {
-			public boolean isRelevantSpecies() {
-				return false;
-			}
-		};
-
-		targetGen.preserveSpecies(oldSpecies, gene);
-		Mockito.verify(gene, Mockito.times(1)).mutate(Generation.MUTATE_NODE_PROBABILITY,
-				Generation.MUTATE_CONNECTION_PROBABILITY, Generation.MUTATE_ENABLE_PROBABILITY);
+		Assert.assertNull(generation.getCompatibleSpecies(player1));
 	}
 
 	@Test
@@ -254,14 +162,29 @@ public class GenerationTest {
 	}
 
 	@Test
-	public void testGenerationInitializer() {
-		Generation gen = Generation.createGen0(playerFactory, 2, 1, 5, new CompatibilityDistanceImpl(0.1, 1, 2));
-		log.info(gen.stringify());
-		Gene gene2 = Gene.newInstance(generation.getUniqueId(), 2, 1);
-		gene2.addConnection(gene2.getSortedInputNodes().get(0), gene2.getSortedOutputNodes().get(0), 1, true);
-		gene2.addConnection(gene2.getSortedInputNodes().get(1), gene2.getSortedOutputNodes().get(0), 1, true);
-		gen.addPlayer(playerFactory.newPlayer(gene2));
-		log.info(gen.stringify());
+	public void testGetSpeciesToPreserveShouldPreserveGrowthSpecies() {
+
+		generation.setGenNumber(16);
+		Species species1 = Species.newInstance(100, 0, null);
+		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 10));
+		generation.addSpecies(species1);
+		for (int i = 0; i <= 16; i++) {
+			species1.addFitness(i);
+		}
+		Assert.assertEquals(0, species1.getFitness(0), 0.01);
+		Assert.assertEquals(1, species1.getFitness(1), 0.01);
+		Assert.assertEquals(16, species1.getFitness(16), 0.01);
+		Assert.assertTrue(generation.getSpeciesToPreserve().stream().anyMatch(s -> s.getId() == 100));
+	}
+
+	@Test
+	public void testGetSpeciesToPreserveShouldPreserveYoungSpecies() {
+
+		generation.setGenNumber(5);
+		Species species1 = Species.newInstance(100, 6, null);
+		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 10));
+		generation.addSpecies(species1);
+		Assert.assertTrue(generation.getSpeciesToPreserve().stream().anyMatch(s -> s.getId() == 100));
 	}
 
 	@Test
@@ -287,6 +210,30 @@ public class GenerationTest {
 	}
 
 	@Test
+	public void testIsYoungIf14GenOld() {
+		generation.setGenNumber(30);
+		Species species = Species.newInstance(0, 16, null);
+		generation.addSpecies(species);
+		Assert.assertTrue(generation.isYoung(species));
+	}
+
+	@Test
+	public void testIsYoungIf15GenOld() {
+		generation.setGenNumber(30);
+		Species species = Species.newInstance(0, 15, null);
+		generation.addSpecies(species);
+		Assert.assertTrue(generation.isYoung(species));
+	}
+
+	@Test
+	public void testIsYoungIf16GenOld() {
+		generation.setGenNumber(30);
+		Species species = Species.newInstance(0, 14, null);
+		generation.addSpecies(species);
+		Assert.assertFalse(generation.isYoung(species));
+	}
+
+	@Test
 	public void testNextGeneration() {
 		Generation gen = Generation.createGen0(playerFactory, 2, 1, 5, new CompatibilityDistanceImpl(0.1, 1, 2));
 		log.info(gen.stringify());
@@ -294,5 +241,63 @@ public class GenerationTest {
 		log.info(nextGen.stringify());
 	}
 
-	Logger log = LoggerFactory.getLogger(GenerationTest.class);
+	@Test
+	public void testPreserveSpeciesShouldCopyChampionIfRelevantSpecies() {
+		CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
+
+		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1, cd);
+
+		Gene gene = Mockito.mock(Gene.class);
+
+		Species oldSpecies = new Species(1, 0, cd) {
+			@Override
+			public boolean isRelevantSpecies() {
+				return true;
+			}
+		};
+
+		targetGen.preserveSpecies(oldSpecies, gene);
+		Mockito.verify(gene, Mockito.times(0)).mutate(Generation.MUTATE_ADD_NODE_PROBABILITY,
+				Generation.MUTATE_REMOVE_NODE_PROBABILITY, Generation.MUTATE_CONNECTION_PROBABILITY,
+				Generation.MUTATE_ENABLE_PROBABILITY);
+	}
+
+	@Test
+	public void testPreserveSpeciesShouldCreateSpecies() {
+		CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
+
+		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1, cd);
+
+		Gene gene = Gene.newInstance(generation.getUniqueId(), 2, 1);
+		gene.addConnection(gene.getSortedInputNodes().get(0), gene.getSortedOutputNodes().get(0), 1, true);
+		gene.addConnection(gene.getSortedInputNodes().get(1), gene.getSortedOutputNodes().get(0), 1, true);
+
+		Species oldSpecies = Species.newInstance(1, 0, cd);
+
+		targetGen.preserveSpecies(oldSpecies, gene);
+		Assert.assertEquals(1, targetGen.getSpecies().size());
+		Assert.assertEquals(oldSpecies.getId(), targetGen.getSpecies().get(0).getId());
+
+	}
+
+	@Test
+	public void testPreserveSpeciesShouldMutateChampionIfIrrelevantSpecies() {
+		CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
+
+		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1, cd);
+
+		Gene gene = Mockito.mock(Gene.class);
+
+		Species oldSpecies = new Species(1, 0, cd) {
+			@Override
+			public boolean isRelevantSpecies() {
+				return false;
+			}
+		};
+
+		targetGen.preserveSpecies(oldSpecies, gene);
+		Mockito.verify(gene, Mockito.times(1)).mutate(Generation.MUTATE_ADD_NODE_PROBABILITY,
+				Generation.MUTATE_REMOVE_NODE_PROBABILITY, Generation.MUTATE_CONNECTION_PROBABILITY,
+				Generation.MUTATE_ENABLE_PROBABILITY);
+	}
 }

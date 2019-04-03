@@ -11,15 +11,17 @@ import org.slf4j.LoggerFactory;
 import it.vitalegi.neat.impl.function.CompatibilityDistance;
 
 public class Species {
-	protected long id;
-	protected int startGeneration;
-	protected List<Double> historyBestFitnesses;
-	protected List<Player> players;
-	protected CompatibilityDistance compatibilityDistance;
-
 	public static Species newInstance(long id, int startGeneration, CompatibilityDistance compatibilityDistance) {
 		return new Species(id, startGeneration, compatibilityDistance);
 	}
+	protected CompatibilityDistance compatibilityDistance;
+	protected List<Double> historyBestFitnesses;
+	protected long id;
+	Logger log = LoggerFactory.getLogger(Species.class);
+
+	protected List<Player> players;
+
+	protected int startGeneration;
 
 	public Species() {
 	}
@@ -30,6 +32,14 @@ public class Species {
 		historyBestFitnesses = new ArrayList<>();
 		players = new ArrayList<>();
 		this.compatibilityDistance = compatibilityDistance;
+	}
+
+	public void addFitness(double fitness) {
+		historyBestFitnesses.add(fitness);
+	}
+
+	public void addPlayer(Player player) {
+		players.add(player);
 	}
 
 	public List<Player> getBestPlayers(Species species, int size) {
@@ -46,27 +56,12 @@ public class Species {
 				.collect(Collectors.toList());
 	}
 
-	public boolean isRelevantSpecies() {
-		return getPlayers().size() >= Generation.MIN_SPECIES_SIZE_TO_BE_RELEVANT;
+	public Player getChampion() {
+		return players.stream().sorted(Comparator.comparing(Player::getFitness).reversed()).findFirst().orElse(null);
 	}
 
-	public void addPlayer(Player player) {
-		players.add(player);
-	}
-
-	public boolean isCompatible(Player player) {
-		return compatibilityDistance.isCompatible(getRepresentative().getGene(), player.getGene());
-	}
-
-	public void addFitness(double fitness) {
-		historyBestFitnesses.add(fitness);
-	}
-
-	public double getLastFitness() {
-		if (historyBestFitnesses.isEmpty()) {
-			return 0;
-		}
-		return historyBestFitnesses.get(historyBestFitnesses.size() - 1);
+	public CompatibilityDistance getCompatibilityDistance() {
+		return compatibilityDistance;
 	}
 
 	public double getFitness(int generation) {
@@ -82,34 +77,6 @@ public class Species {
 		return historyBestFitnesses.get(relativeGeneration);
 	}
 
-	public Player getPlayerByGeneId(long id) {
-		return players.stream().filter(p -> p.getGeneId() == id).findFirst().orElse(null);
-	}
-
-	public Player getChampion() {
-		return players.stream().sorted(Comparator.comparing(Player::getFitness).reversed()).findFirst().orElse(null);
-	}
-
-	public Player getRepresentative() {
-		return players.get(0);
-	}
-
-	public List<Player> getPlayers() {
-		return players;
-	}
-
-	public CompatibilityDistance getCompatibilityDistance() {
-		return compatibilityDistance;
-	}
-
-	public void setCompatibilityDistance(CompatibilityDistance compatibilityDistance) {
-		this.compatibilityDistance = compatibilityDistance;
-	}
-
-	public int getStartGeneration() {
-		return startGeneration;
-	}
-
 	public List<Double> getHistoryBestFitnesses() {
 		return historyBestFitnesses;
 	}
@@ -118,5 +85,38 @@ public class Species {
 		return id;
 	}
 
-	Logger log = LoggerFactory.getLogger(Species.class);
+	public double getLastFitness() {
+		if (historyBestFitnesses.isEmpty()) {
+			return 0;
+		}
+		return historyBestFitnesses.get(historyBestFitnesses.size() - 1);
+	}
+
+	public Player getPlayerByGeneId(long id) {
+		return players.stream().filter(p -> p.getGeneId() == id).findFirst().orElse(null);
+	}
+
+	public List<Player> getPlayers() {
+		return players;
+	}
+
+	public Player getRepresentative() {
+		return players.get(0);
+	}
+
+	public int getStartGeneration() {
+		return startGeneration;
+	}
+
+	public boolean isCompatible(Player player) {
+		return compatibilityDistance.isCompatible(getRepresentative().getGene(), player.getGene());
+	}
+
+	public boolean isRelevantSpecies() {
+		return getPlayers().size() >= Generation.MIN_SPECIES_SIZE_TO_BE_RELEVANT;
+	}
+
+	public void setCompatibilityDistance(CompatibilityDistance compatibilityDistance) {
+		this.compatibilityDistance = compatibilityDistance;
+	}
 }

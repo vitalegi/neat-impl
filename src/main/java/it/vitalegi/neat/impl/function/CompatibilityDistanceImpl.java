@@ -4,9 +4,13 @@ import it.vitalegi.neat.impl.Gene;
 
 public class CompatibilityDistanceImpl implements CompatibilityDistance {
 
-	protected double deltaT;
 	protected double c1;
 	protected double c2;
+	protected double deltaT;
+
+	public CompatibilityDistanceImpl() {
+		super();
+	}
 
 	public CompatibilityDistanceImpl(double deltaT, double c1, double c2) {
 		this.c1 = c1;
@@ -14,8 +18,12 @@ public class CompatibilityDistanceImpl implements CompatibilityDistance {
 		this.deltaT = deltaT;
 	}
 
-	public CompatibilityDistanceImpl() {
-		super();
+	public double getC1() {
+		return c1;
+	}
+
+	public double getC2() {
+		return c2;
 	}
 
 	@Override
@@ -41,16 +49,8 @@ public class CompatibilityDistanceImpl implements CompatibilityDistance {
 		return getDistance(gene1, gene2) < deltaT;
 	}
 
-	public double getC1() {
-		return c1;
-	}
-
 	public void setC1(double c1) {
 		this.c1 = c1;
-	}
-
-	public double getC2() {
-		return c2;
 	}
 
 	public void setC2(double c2) {

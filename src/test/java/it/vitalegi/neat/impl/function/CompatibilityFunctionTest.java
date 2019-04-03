@@ -18,12 +18,12 @@ import it.vitalegi.neat.impl.UniqueId;
 @ActiveProfiles("test")
 public class CompatibilityFunctionTest {
 
-	UniqueId uniqueId;
-
 	@BeforeClass
 	public static void initClass() {
 		Random.init();
 	}
+
+	UniqueId uniqueId;
 
 	@Before
 	public void init() {

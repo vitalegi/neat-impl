@@ -20,12 +20,14 @@ import it.vitalegi.neat.impl.UniqueId;
 @ActiveProfiles("test")
 public class FeedForwardTest {
 
-	UniqueId uniqueId;
-
 	@BeforeClass
 	public static void initClass() {
 		Random.init();
 	}
+
+	Logger log = LoggerFactory.getLogger(FeedForwardTest.class);
+
+	UniqueId uniqueId;
 
 	@Before
 	public void init() {
@@ -38,6 +40,4 @@ public class FeedForwardTest {
 		double[] outputs = new FeedForward(gene).feedForward(new double[] { 1.0 });
 		Assert.assertArrayEquals(new double[] { 0.5, 0.5 }, outputs, 0.0001);
 	}
-
-	Logger log = LoggerFactory.getLogger(FeedForwardTest.class);
 }
