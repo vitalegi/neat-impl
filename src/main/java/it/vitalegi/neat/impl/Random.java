@@ -31,7 +31,7 @@ public class Random {
 
 	public static double nextDouble(double from, double to) {
 		checkInit();
-		return -from + (to - from) * random.nextDouble();
+		return from + (to - from) * random.nextDouble();
 	}
 
 	public static int nextInt(int bound) {
@@ -40,8 +40,8 @@ public class Random {
 	}
 
 	/**
-	 * restituisce un indice dell'array, selezionato in modo casuale, pesando
-	 * con i valori dell'array
+	 * restituisce un indice dell'array, selezionato in modo casuale, pesando con i
+	 * valori dell'array
 	 *
 	 * @param weights
 	 * @return

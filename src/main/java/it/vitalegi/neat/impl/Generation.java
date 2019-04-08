@@ -312,7 +312,7 @@ public class Generation {
 
 	public Generation nextGeneration() {
 		Generation nextGen = new Generation(uniqueId, factory, genNumber + 1, compatibilityDistance);
-
+		uniqueId.clearConnectionIds();
 		List<Species> speciesToPreserve = getSpeciesToPreserve();
 
 		for (Species s : speciesToPreserve) {

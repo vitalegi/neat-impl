@@ -19,8 +19,8 @@ public class Gene {
 
 	private static Logger log = LoggerFactory.getLogger(Gene.class);
 
-	private static final double MIN_WEIGHT = 0;
-	private static final double MAX_WEIGHT = 1;
+	public static final double MIN_WEIGHT = -1;
+	public static final double MAX_WEIGHT = 1;
 
 	public static Gene newInstance(UniqueId uniqueId) {
 		return newInstance(uniqueId, uniqueId.nextGeneId(), 0, 0);

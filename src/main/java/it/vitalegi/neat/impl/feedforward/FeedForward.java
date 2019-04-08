@@ -3,6 +3,7 @@ package it.vitalegi.neat.impl.feedforward;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -80,6 +81,7 @@ public class FeedForward {
 		List<Long> pendingNodes = graph.keySet().stream().collect(Collectors.toList());
 
 		while (!pendingNodes.isEmpty()) {
+			boolean found = false;
 			for (int i = 0; i < pendingNodes.size(); i++) {
 				GraphNode curr = graph.get(pendingNodes.get(i));
 
@@ -95,7 +97,34 @@ public class FeedForward {
 					nodes.add(curr.getId());
 					pendingNodes.remove(i);
 					i--;
+					found = true;
 				}
+			}
+			if (!found) {
+				log.error("Individuato un loop tra i nodi {}.",
+						pendingNodes.stream().map(String::valueOf).collect(Collectors.joining(", ")));
+				log.error("GENE: {}", gene.stringify(false));
+
+				Comparator<Connection> c1 = new Comparator<Connection>() {
+					@Override
+					public int compare(Connection o1, Connection o2) {
+						return (int) (o1.getFromNode().getId() - o2.getFromNode().getId());
+					}
+				};
+
+				Comparator<Connection> c2 = new Comparator<Connection>() {
+					@Override
+					public int compare(Connection o1, Connection o2) {
+						return (int) (o1.getToNode().getId() - o2.getToNode().getId());
+					}
+				};
+				StringBuilder sb = new StringBuilder();
+				gene.getConnections().stream().sorted(c1.thenComparing(c2))//
+						.forEach(c -> {
+							log.error("{}\t{}\t{}", c.getFromNode().getId(), c.getToNode().getId(), c.isEnabled());
+						});
+				log.error("RECAP GRAFO.", sb.toString());
+				throw new RuntimeException("Loop detected.");
 			}
 		}
 		return nodes;

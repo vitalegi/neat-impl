@@ -24,29 +24,37 @@ public class XorPlayerTest {
 
 	private static class XorPlayer extends Player {
 
+		int generation;
+
+		public XorPlayer(int generation) {
+			super();
+			this.generation = generation;
+		}
+
 		private double execute(double in1, double in2) {
 			return feedForward(new double[] { in1, in2 })[0];
 		}
 
-		static final double ONE = 1.0;
-		static final double ZERO = -1.0;
+		static final double ONE = 1;
+		static final double ZERO = 0;
 
 		@Override
 		public void run() {
-			double sum = 0;
-			int errors = 0;
-			for (int i = 0; i < 100; i++) {
-				double in1 = Random.nextBoolean() ? ONE : ZERO;
-				double in2 = Random.nextBoolean() ? ONE : ZERO;
+			fitness = 0;
+			for (int i = 0; i < 4; i++) {
+				double in1 = i % 2 == 0 ? ONE : ZERO;
+				double in2 = i / 2 == 0 ? ONE : ZERO;
 				double out = execute(in1, in2);
-				double expected = in1 == in2 ? ZERO : ONE;
-				double diff = Math.abs(out - expected);
-				if (diff > 0.3) {
-					errors++;
+				if (in1 == in2) {
+					if (out < 0.8) {
+						fitness++;
+					}
+				} else {
+					if (out > 0.9) {
+						fitness++;
+					}
 				}
-				sum += 1 - diff * diff;
 			}
-			fitness = sum - errors;
 		}
 
 		public void assertPerfect() {
@@ -77,11 +85,17 @@ public class XorPlayerTest {
 
 	private static class XorPlayerFactory implements PlayerFactory {
 
+		private int generation;
+
 		@Override
 		public XorPlayer newPlayer(Gene gene) {
-			XorPlayer p = new XorPlayer();
+			XorPlayer p = new XorPlayer(generation);
 			p.setGene(gene);
 			return p;
+		}
+
+		public void setGeneration(int generation) {
+			this.generation = generation;
 		}
 	}
 
@@ -100,13 +114,14 @@ public class XorPlayerTest {
 	@Test
 	public void test10Generation() {
 		playerFactory = new XorPlayerFactory();
-		generation = Generation.createGen0(playerFactory, 2, 1, 150, new CompatibilityDistanceImpl(2.0, 1, 2));
+		generation = Generation.createGen0(playerFactory, 2, 1, 150, new CompatibilityDistanceImpl(1.5, 2, 1.5));
 
 		List<List<String>> results = new ArrayList<>();
 
 		EvolutionAnalysis analysis = new EvolutionAnalysis();
 		for (int i = 0; i < 70; i++) {
 			log.info("CUR: " + i);
+			((XorPlayerFactory) playerFactory).setGeneration(i);
 			Generation nextGen = perform(generation);
 			analysis.add(generation);
 
