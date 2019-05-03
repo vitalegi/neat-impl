@@ -53,7 +53,7 @@ public class UniqueId {
 		Pattern pattern = Pattern.compile(Connection.class.getName() + "_\\d+_\\d+");
 		Iterator<String> it = ids.keySet().iterator();
 		while (it.hasNext()) {
-			String k =it.next();
+			String k = it.next();
 			if (pattern.matcher(k).matches()) {
 				it.remove();
 			}

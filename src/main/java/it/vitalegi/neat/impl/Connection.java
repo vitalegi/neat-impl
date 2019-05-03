@@ -13,12 +13,14 @@ public class Connection {
 		con.setEnabled(enabled);
 		return con;
 	}
+
 	public static Connection newInstance(UniqueId uniqueId, Node fromNode, Node toNode, double weight,
 			boolean enabled) {
 
 		return newInstance(uniqueId, uniqueId.nextConnectionId(fromNode.getId(), toNode.getId()), fromNode, toNode,
 				weight, enabled);
 	}
+
 	private boolean enabled;
 	private Node fromNode;
 	private long id;
@@ -29,6 +31,14 @@ public class Connection {
 
 	public Node getFromNode() {
 		return fromNode;
+	}
+
+	public long getFromNodeId() {
+		return fromNode.getId();
+	}
+
+	public long getToNodeId() {
+		return toNode.getId();
 	}
 
 	public long getId() {

@@ -3,7 +3,12 @@ package it.vitalegi.neat.impl.util;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+
 public class TablePrinter {
+
+	public static final int LEFT = -1;
+	public static final int RIGHT = 1;
 
 	private class Row {
 
@@ -13,15 +18,19 @@ public class TablePrinter {
 			this.values = values;
 		}
 	}
+
 	public static TablePrinter newPrinter() {
 		TablePrinter printer = new TablePrinter();
 		printer.rows = new ArrayList<>();
+		printer.alignments = new ArrayList<>();
 		return printer;
 	}
 
 	private Row headers;
 
 	private List<Row> rows;
+
+	private List<Integer> alignments;
 
 	public void addRow(List<String> row) {
 		rows.add(new Row(row));
@@ -42,29 +51,43 @@ public class TablePrinter {
 		return widths;
 	}
 
-	public StringBuilder print() {
-		StringBuilder sb = new StringBuilder();
-		int[] widths = getWidths();
-		sb.append(printHorizontalBar(widths)).append("\n");
-		sb.append(print(headers, widths)).append("\n");
-		sb.append(printHorizontalBar(widths)).append("\n");
-		rows.forEach(r -> sb.append(print(r, widths)).append("\n"));
-		sb.append(printHorizontalBar(widths)).append("\n");
-		return sb;
+	public void log(Logger log) {
+		if (log.isDebugEnabled()) {
+			int[] widths = getWidths();
+			log.debug(getHorizontalBar(widths));
+			log.debug(getRow(headers, widths, getAlignments()));
+			log.debug(getHorizontalBar(widths));
+			rows.forEach(r -> log.debug(getRow(r, widths, getAlignments())));
+			log.debug(getHorizontalBar(widths));
+		}
 	}
 
-	private String print(Row row, int[] widths) {
+	private int[] getAlignments() {
+		return alignments.stream().mapToInt(i -> i).toArray();
+	}
+
+	private String getRow(Row row, int[] widths, int[] alignments) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < widths.length; i++) {
 			sb.append("| ");
-			sb.append(StringUtil.leftPadding(row.values.get(i), widths[i]));
+			String v = row.values.get(i);
+			int w = widths[i];
+			int align = LEFT;
+			if (i < alignments.length) {
+				align = alignments[i];
+			}
+			if (TablePrinter.LEFT == align) {
+				sb.append(StringUtil.rightPadding(v, w));
+			} else {
+				sb.append(StringUtil.leftPadding(v, w));
+			}
 			sb.append(" ");
 		}
 		sb.append("|");
 		return sb.toString();
 	}
 
-	private String printHorizontalBar(int[] widths) {
+	private String getHorizontalBar(int[] widths) {
 		StringBuilder sb = new StringBuilder();
 		for (int i = 0; i < widths.length; i++) {
 			sb.append("+-");
@@ -77,5 +100,9 @@ public class TablePrinter {
 
 	public void setHeaders(List<String> headers) {
 		this.headers = new Row(headers);
+	}
+
+	public void setAlignments(List<Integer> alignments) {
+		this.alignments = alignments;
 	}
 }

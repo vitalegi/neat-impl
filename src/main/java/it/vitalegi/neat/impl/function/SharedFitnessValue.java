@@ -2,7 +2,7 @@ package it.vitalegi.neat.impl.function;
 
 import java.util.List;
 
-import it.vitalegi.neat.impl.Player;
+import it.vitalegi.neat.impl.player.Player;
 
 public class SharedFitnessValue {
 

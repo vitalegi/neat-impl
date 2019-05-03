@@ -9,11 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import it.vitalegi.neat.impl.function.CompatibilityDistance;
+import it.vitalegi.neat.impl.player.Player;
 
 public class Species {
 	public static Species newInstance(long id, int startGeneration, CompatibilityDistance compatibilityDistance) {
 		return new Species(id, startGeneration, compatibilityDistance);
 	}
+
 	protected CompatibilityDistance compatibilityDistance;
 	protected List<Double> historyBestFitnesses;
 	protected long id;

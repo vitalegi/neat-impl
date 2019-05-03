@@ -11,6 +11,10 @@ public class StringUtil {
 		return d.toPlainString();
 	}
 
+	public static String rightPadding(String str, int padding) {
+		return rightPadding(str, padding, ' ');
+	}
+
 	public static String leftPadding(String str, int padding) {
 		return leftPadding(str, padding, ' ');
 	}
@@ -18,6 +22,13 @@ public class StringUtil {
 	public static String leftPadding(String str, int padding, char paddingChar) {
 		while (str.length() < padding) {
 			str = paddingChar + str;
+		}
+		return str;
+	}
+
+	public static String rightPadding(String str, int padding, char paddingChar) {
+		while (str.length() < padding) {
+			str = str + paddingChar;
 		}
 		return str;
 	}

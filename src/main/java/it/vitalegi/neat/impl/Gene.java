@@ -13,37 +13,43 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import it.vitalegi.neat.impl.feedforward.FeedForward;
+import it.vitalegi.neat.impl.feedforward.FeedForwardImpl;
 import it.vitalegi.neat.impl.util.StringUtil;
 
 public class Gene {
 
 	private static Logger log = LoggerFactory.getLogger(Gene.class);
 
-	public static final double MIN_WEIGHT = -1;
-	public static final double MAX_WEIGHT = 1;
+	public static final double MIN_WEIGHT = -10;
+	public static final double MAX_WEIGHT = 10;
 
 	public static Gene newInstance(UniqueId uniqueId) {
-		return newInstance(uniqueId, uniqueId.nextGeneId(), 0, 0);
+		return newInstance(uniqueId, uniqueId.nextGeneId(), 0, 0, 0);
 	}
 
 	public static Gene newInstance(UniqueId uniqueId, int inputs, int outputs) {
-		return newInstance(uniqueId, uniqueId.nextGeneId(), inputs, outputs);
+		return newInstance(uniqueId, uniqueId.nextGeneId(), inputs, outputs, 0);
 	}
 
-	public static Gene newInstance(UniqueId uniqueId, long id, int inputs, int outputs) {
+	public static Gene newInstance(UniqueId uniqueId, long id, int inputs, int outputs, int biases) {
 		long[] inputIds = new long[inputs];
 		long[] outputIds = new long[outputs];
+		long[] biasIds = new long[biases];
 		for (int i = 0; i < inputIds.length; i++) {
 			inputIds[i] = uniqueId.nextNodeId();
 		}
 		for (int i = 0; i < outputIds.length; i++) {
 			outputIds[i] = uniqueId.nextNodeId();
 		}
-		return new Gene(uniqueId, id, inputIds, outputIds);
+		for (int i = 0; i < biasIds.length; i++) {
+			biasIds[i] = uniqueId.nextNodeId();
+		}
+		return new Gene(uniqueId, id, inputIds, outputIds, biasIds);
 	}
 
-	public static Gene newInstance(UniqueId uniqueId, long id, long[] inputIds, long[] outputIds) {
-		return new Gene(uniqueId, id, inputIds, outputIds);
+	public static Gene newInstance(UniqueId uniqueId, long id, long[] inputIds, long[] outputIds, long[] biasIds) {
+		return new Gene(uniqueId, id, inputIds, outputIds, biasIds);
 	}
 
 	protected List<Connection> connections;
@@ -65,7 +71,7 @@ public class Gene {
 		nodes = new ArrayList<>();
 	}
 
-	private Gene(UniqueId uniqueId, long id, long[] inputIds, long[] outputIds) {
+	private Gene(UniqueId uniqueId, long id, long[] inputIds, long[] outputIds, long[] biasIds) {
 		this(uniqueId, id);
 
 		this.inputs = inputIds.length;
@@ -76,6 +82,9 @@ public class Gene {
 		}
 		for (int i = 0; i < outputIds.length; i++) {
 			addNode(Node.newOutputInstance(uniqueId, outputIds[i]));
+		}
+		for (int i = 0; i < biasIds.length; i++) {
+			addNode(Node.newInstance(uniqueId, biasIds[i]));
 		}
 	}
 
@@ -110,7 +119,11 @@ public class Gene {
 		return n;
 	}
 
-	protected Node addNode(Node n) {
+	public FeedForward getFeedForward() {
+		return new FeedForwardImpl(this);
+	}
+
+	public Node addNode(Node n) {
 		nodes.add(n);
 		return n;
 	}
@@ -162,6 +175,10 @@ public class Gene {
 		for (int i = 0; i < size; i++) {
 			double w1 = this.connections.get(i).getWeight();
 			double w2 = gene.connections.get(i).getWeight();
+			if (this.connections.get(i).getId() != gene.connections.get(i).getId()) {
+				throw new IllegalArgumentException(
+						this.connections.get(i).getId() + " " + gene.connections.get(i).getId());
+			}
 			sum += Math.abs(w1 - w2);
 			count++;
 		}
@@ -280,6 +297,10 @@ public class Gene {
 		return getSortedNodes(Node::isInput);
 	}
 
+	public List<Long> getSortedBiasNodes() {
+		return getSortedNodes(Node::isBias);
+	}
+
 	private List<Long> getSortedNodes(Predicate<Node> condition) {
 		List<Long> list = new ArrayList<>();
 		for (int i = 0; i < nodes.size(); i++) {
@@ -333,31 +354,6 @@ public class Gene {
 		// abilito / disabilito
 		if (Random.nextBoolean(randomEnable)) {
 			mutateChangeRandomEnableConnection();
-		}
-		normalizeWeights();
-		return this;
-	}
-
-	protected Gene normalizeWeights() {
-		for (Node node : nodes) {
-			List<Connection> connections = getConnectionsToNode(node);
-			if (connections.size() < 2) {
-				continue;
-			}
-			double min = connections.stream().mapToDouble(Connection::getWeight).min().getAsDouble();
-			if (min < 0) {
-				for (Connection c : connections) {
-					c.setWeight(min + c.getWeight());
-				}
-			}
-			double sum = connections.stream().mapToDouble(Connection::getWeight).sum();
-
-			if (sum == 0) {
-				continue;
-			}
-			for (Connection c : connections) {
-				c.setWeight(c.getWeight() / sum);
-			}
 		}
 		return this;
 	}
@@ -477,7 +473,19 @@ public class Gene {
 	public Gene offspring(Gene gene) {
 		long[] inputIds = getSortedInputNodes().stream().mapToLong(n -> n).toArray();
 		long[] outputIds = getSortedOutputNodes().stream().mapToLong(n -> n).toArray();
-		Gene offspring = Gene.newInstance(uniqueId, uniqueId.nextGeneId(), inputIds, outputIds);
+		Gene offspring = Gene.newInstance(uniqueId, uniqueId.nextGeneId(), inputIds, outputIds, new long[0]);
+
+		// add nodes
+		for (Node node : this.getNodes()) {
+			if (offspring.getNodes().stream().noneMatch(n -> n.getId() == node.getId())) {
+				offspring.addNode(node);
+			}
+		}
+		for (Node node : gene.getNodes()) {
+			if (offspring.getNodes().stream().noneMatch(n -> n.getId() == node.getId())) {
+				offspring.addNode(node);
+			}
+		}
 
 		int matchingCount = this.getMatchingGenesCount(gene);
 
@@ -505,26 +513,26 @@ public class Gene {
 			}
 		}
 		// disjoint & excess
-//		while (i1 < this.getSize() && i2 < gene.getSize()) {
-//			Connection conn1 = this.getConnectionByIndex(i1);
-//			Connection conn2 = gene.getConnectionByIndex(i2);
-//			if (conn1.getId() < conn2.getId()) {
-//				offspring.addConnection(conn1);
-//				i1++;
-//			} else {
-//				offspring.addConnection(conn2);
-//				i2++;
-//			}
-//		}
-//
-//		while (i1 < this.getSize()) {
-//			offspring.addConnection(this.getConnectionByIndex(i1));
-//			i1++;
-//		}
-//		while (i2 < gene.getSize()) {
-//			offspring.addConnection(gene.getConnectionByIndex(i2));
-//			i2++;
-//		}
+		// while (i1 < this.getSize() && i2 < gene.getSize()) {
+		// Connection conn1 = this.getConnectionByIndex(i1);
+		// Connection conn2 = gene.getConnectionByIndex(i2);
+		// if (conn1.getId() < conn2.getId()) {
+		// offspring.addConnection(conn1);
+		// i1++;
+		// } else {
+		// offspring.addConnection(conn2);
+		// i2++;
+		// }
+		// }
+		//
+		// while (i1 < this.getSize()) {
+		// offspring.addConnection(this.getConnectionByIndex(i1));
+		// i1++;
+		// }
+		// while (i2 < gene.getSize()) {
+		// offspring.addConnection(gene.getConnectionByIndex(i2));
+		// i2++;
+		// }
 		return offspring;
 	}
 
@@ -537,28 +545,43 @@ public class Gene {
 	}
 
 	public String stringify(boolean inline) {
-		StringBuilder sb = new StringBuilder();
-		sb.append("Id: ").append(id);
-		sb.append(" Nodes: ").append(nodes.size());
-		sb.append(" Conns: ").append(connections.size());
-		sb.append(" ");
-		connections.stream().sorted(Comparator.comparing(Connection::getId))//
-				.forEach(c -> {
+		return stringify(inline, true, true, Comparator.comparing(Connection::getId));
+	}
+
+	public String stringify(boolean inline, boolean includeConnectionName, boolean includeDisabled,
+			Comparator<Connection> comparator) {
+		StringBuilder sbb = new StringBuilder();
+		sbb.append("Id: ").append(id);
+		sbb.append(" Nodes: ").append(nodes.size());
+		sbb.append(" Conns: ").append(connections.size());
+		sbb.append(" ");
+		sbb.append(connections.stream()//
+				.filter(c -> c.isEnabled() || includeDisabled) //
+				.sorted(comparator)//
+				.map(c -> {
+					StringBuilder sb = new StringBuilder();
 					// id
-					sb.append(c.getId());
-					sb.append(" ");
+					if (includeConnectionName) {
+						sb.append(c.getId()).append(" ");
+					}
 
 					sb.append("(");
-					if (getNodeById(c.getFromNode().getId()).isInput()) {
+					if (getNodeById(c.getFromNodeId()).isInput()) {
 						sb.append("in:");
 					}
-					sb.append(c.getFromNode().getId());
+					if (getNodeById(c.getFromNodeId()).isBias()) {
+						sb.append("bias:");
+					}
+					sb.append(c.getFromNodeId());
 					sb.append("->");
 
-					if (getNodeById(c.getToNode().getId()).isOutput()) {
+					if (getNodeById(c.getToNodeId()).isOutput()) {
 						sb.append("out:");
 					}
-					sb.append(c.getToNode().getId());
+					if (getNodeById(c.getToNodeId()).isBias()) {
+						sb.append("bias:");
+					}
+					sb.append(c.getToNodeId());
 
 					if (!c.isEnabled()) {
 						sb.append(" DIS");
@@ -566,14 +589,10 @@ public class Gene {
 						sb.append(" " + StringUtil.format(c.getWeight()));
 					}
 					sb.append(")");
+					return sb;
+				})//
+				.collect(Collectors.joining(inline ? ", " : "\n")));
 
-					if (inline) {
-						sb.append(", ");
-					} else {
-						sb.append("\n");
-					}
-				});
-
-		return sb.toString();
+		return sbb.toString();
 	}
 }

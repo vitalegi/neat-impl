@@ -1,10 +1,8 @@
 package it.vitalegi.neat.impl;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 
-import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -14,90 +12,17 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import it.vitalegi.neat.impl.analysis.EvolutionAnalysis;
+import it.vitalegi.neat.impl.function.CompatibilityDistance;
 import it.vitalegi.neat.impl.function.CompatibilityDistanceImpl;
-import it.vitalegi.neat.impl.util.StringUtil;
+import it.vitalegi.neat.impl.player.Player;
+import it.vitalegi.neat.impl.player.PlayerFactory;
+import it.vitalegi.neat.impl.player.XorPlayer;
+import it.vitalegi.neat.impl.player.XorPlayerFactory;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
 public class XorPlayerTest {
-
-	private static class XorPlayer extends Player {
-
-		int generation;
-
-		public XorPlayer(int generation) {
-			super();
-			this.generation = generation;
-		}
-
-		private double execute(double in1, double in2) {
-			return feedForward(new double[] { in1, in2 })[0];
-		}
-
-		static final double ONE = 1;
-		static final double ZERO = 0;
-
-		@Override
-		public void run() {
-			fitness = 0;
-			for (int i = 0; i < 4; i++) {
-				double in1 = i % 2 == 0 ? ONE : ZERO;
-				double in2 = i / 2 == 0 ? ONE : ZERO;
-				double out = execute(in1, in2);
-				if (in1 == in2) {
-					if (out < 0.8) {
-						fitness++;
-					}
-				} else {
-					if (out > 0.9) {
-						fitness++;
-					}
-				}
-			}
-		}
-
-		public void assertPerfect() {
-			log.info("{} XOR {} = expected {} actual {}", ONE, ZERO, ONE, execute(ONE, ZERO));
-			log.info("{} XOR {} = expected {} actual {}", ZERO, ONE, ONE, execute(ZERO, ONE));
-			log.info("{} XOR {} = expected {} actual {}", ONE, ONE, ZERO, execute(ONE, ONE));
-			log.info("{} XOR {} = expected {} actual {}", ZERO, ZERO, ZERO, execute(ZERO, ZERO));
-			Assert.assertEquals(ONE, execute(ONE, ZERO), 0.3);
-			Assert.assertEquals(ONE, execute(ZERO, ONE), 0.3);
-			Assert.assertEquals(ZERO, execute(ONE, ONE), 0.3);
-			Assert.assertEquals(ZERO, execute(ZERO, ZERO), 0.3);
-		}
-
-		public String toString() {
-			StringBuilder sb = new StringBuilder();
-
-			double sum = 0;
-			sb.append(" " + ONE + " XOR " + ZERO + " = " + StringUtil.format(execute(ONE, ZERO)));
-			sb.append(" " + ZERO + " XOR " + ONE + " = " + StringUtil.format(execute(ZERO, ONE)));
-			sb.append(" " + ONE + " XOR " + ONE + " = " + StringUtil.format(execute(ONE, ONE)));
-			sb.append(" " + ZERO + " XOR " + ZERO + " = " + StringUtil.format(execute(ZERO, ZERO)));
-			sb.append(" " + StringUtil.format(fitness));
-			return sb.toString();
-		}
-
-		Logger log = LoggerFactory.getLogger(XorPlayer.class);
-	}
-
-	private static class XorPlayerFactory implements PlayerFactory {
-
-		private int generation;
-
-		@Override
-		public XorPlayer newPlayer(Gene gene) {
-			XorPlayer p = new XorPlayer(generation);
-			p.setGene(gene);
-			return p;
-		}
-
-		public void setGeneration(int generation) {
-			this.generation = generation;
-		}
-	}
 
 	Generation generation;
 
@@ -106,47 +31,43 @@ public class XorPlayerTest {
 	PlayerFactory playerFactory;
 
 	protected Generation perform(Generation generation) {
-		generation.getPlayers().forEach(Player::run);
+		generation.getPlayers().stream().map(p -> (XorPlayer) p).forEach(XorPlayer::execute);
 		generation.computeFitnesses();
 		return generation.nextGeneration();
 	}
 
+	@Ignore
 	@Test
-	public void test10Generation() {
-		playerFactory = new XorPlayerFactory();
-		generation = Generation.createGen0(playerFactory, 2, 1, 150, new CompatibilityDistanceImpl(1.5, 2, 1.5));
+	public void testXor() {
+		trainNetwork(150, 100, new double[] { 1, -1 }, 3, 1.4, 1.8, true);
+	}
 
-		List<List<String>> results = new ArrayList<>();
+	public void trainNetwork(int generations, int population, double[] biases, double deltaT, double c1, double c2,
+			boolean enableLog) {
+		playerFactory = new XorPlayerFactory(biases);
+		CompatibilityDistance cd = new CompatibilityDistanceImpl(deltaT, c1, c2);
+		generation = Generation.createGen0(playerFactory, 2 + biases.length, 1, 0, population, cd);
 
 		EvolutionAnalysis analysis = new EvolutionAnalysis();
-		for (int i = 0; i < 70; i++) {
-			log.info("CUR: " + i);
+		for (int i = 0; i < generations; i++) {
 			((XorPlayerFactory) playerFactory).setGeneration(i);
 			Generation nextGen = perform(generation);
 			analysis.add(generation);
-
-			List<String> rr = new ArrayList<>();
-			results.add(rr);
-			generation.getPlayers().forEach(p -> rr.add(p.toString()));
-
 			generation = nextGen;
 		}
-		log.info(generation.stringify());
-		log.info("\n" + analysis.getAnalysis());
-
 		Generation lastGen = analysis.getGenerations().get(analysis.getGenerations().size() - 1);
 
 		XorPlayer bestPlayer = (XorPlayer) lastGen.getPlayers().stream() //
 				.sorted(Comparator.comparing(Player::getFitness).reversed()) //
 				.findFirst().orElse(null);
 
-		results.forEach(r -> {
-			// log.info(">");
-			r.forEach(rr -> {
-				// log.info(">>> " + rr);
-			});
-		});
-
+		if (enableLog && log.isDebugEnabled()) {
+			log.debug(generation.stringify());
+			analysis.logAnalysis(log);
+			log.debug("Networks");
+			// analysis.getNetworks(new double[] { 1.0, 1.0 }, biases, log);
+		}
+		log.info("Best Player {}: ", bestPlayer.getGene().stringify(true));
 		bestPlayer.assertPerfect();
 	}
 }

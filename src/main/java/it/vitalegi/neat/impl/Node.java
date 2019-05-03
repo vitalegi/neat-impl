@@ -4,31 +4,37 @@ public class Node {
 
 	public static Node newInputInstance(UniqueId uniqueId, long id) {
 
-		return new Node(uniqueId, id, true, false);
+		return new Node(uniqueId, id, true, false, false);
 	}
+
 	public static Node newInstance(UniqueId uniqueId, long id) {
 
-		return new Node(uniqueId, id, false, false);
+		return new Node(uniqueId, id, false, false, false);
 	}
+
 	public static Node newOutputInstance(UniqueId uniqueId, long id) {
-		return new Node(uniqueId, id, false, true);
+		return new Node(uniqueId, id, false, true, false);
+	}
+
+	public static Node newBiasInstance(UniqueId uniqueId, long id) {
+		return new Node(uniqueId, id, false, false, true);
 	}
 
 	private long id;
-
 	private boolean input;
-
 	private boolean output;
+	private boolean bias;
 
 	public Node() {
 		super();
 	}
 
-	public Node(UniqueId uniqueId, long id, boolean input, boolean output) {
+	public Node(UniqueId uniqueId, long id, boolean input, boolean output, boolean bias) {
 		super();
 		this.id = uniqueId.nextNodeId(id);
 		this.input = input;
 		this.output = output;
+		this.bias = bias;
 	}
 
 	public long getId() {
@@ -53,6 +59,14 @@ public class Node {
 
 	public void setOutput(boolean output) {
 		this.output = output;
+	}
+
+	public boolean isBias() {
+		return bias;
+	}
+
+	public void setBias(boolean bias) {
+		this.bias = bias;
 	}
 
 	@Override

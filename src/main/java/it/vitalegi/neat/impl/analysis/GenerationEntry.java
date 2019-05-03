@@ -3,135 +3,169 @@ package it.vitalegi.neat.impl.analysis;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
+import it.vitalegi.neat.impl.Connection;
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.Generation;
-import it.vitalegi.neat.impl.Player;
 import it.vitalegi.neat.impl.Species;
-import it.vitalegi.neat.impl.util.StringUtil;
+import it.vitalegi.neat.impl.player.Player;
+import it.vitalegi.neat.impl.util.Pair;
 
 public class GenerationEntry {
 
-	public static List<String> getTextAnalysisHeaders() {
-		List<String> headers = new ArrayList<>();
-		headers.add("Gen");
-		headers.add("Pop");
-		headers.add("Best Id");
-		headers.add("Best Score");
-		headers.add("Avg Score");
-		headers.add("# Species");
-		headers.add("Avg Species Size");
-		headers.add("# Species Add");
-		headers.add("# Species Remove");
-		headers.add("# Nodes");
-		headers.add("Avg Nodes");
-		headers.add("# Conns");
-		headers.add("Avg Conns");
-		headers.add("Species Ids");
-		return headers;
+	public static List<Pair<String, Metric>> getColumns() {
+		List<Pair<String, Metric>> columns = new ArrayList<>();
+		columns.add(Pair.newInstance("Gen", (prev, curr) -> curr.getGenNumber()));
 
-	}
-
-	public static GenerationEntry newInstance(Generation prevGeneration, Generation generation) {
-
-		Player bestPlayer = generation.getPlayers().stream()//
+		columns.add(Pair.newInstance("Pop", (prev, curr) -> curr.getPlayers().size()));
+		columns.add(Pair.newInstance("Best Id", (prev, curr) -> //
+		curr.getPlayers().stream()//
 				.sorted(Comparator.comparing(Player::getFitness).reversed())//
-				.findFirst().orElseThrow(() -> new RuntimeException("No best player found"));
+				.findFirst().orElse(null)//
+				.getGene().getId()));
 
-		GenerationEntry entry = new GenerationEntry();
-		entry.generation = generation.getGenNumber();
-		entry.population = generation.getPlayers().size();
-		entry.bestPlayer = bestPlayer;
-		entry.bestScore = bestPlayer.getFitness();
-		entry.avgScore = generation.getPlayers().stream()//
-				.mapToDouble(Player::getFitness)//
-				.average().getAsDouble();
+		columns.add(Pair.newInstance("Best Score", (prev, curr) -> //
+		curr.getPlayers().stream()//
+				.sorted(Comparator.comparing(Player::getFitness).reversed())//
+				.findFirst().orElse(null)//
+				.getFitness()));
 
-		entry.species = (generation.getSpecies().size());
+		columns.add(Pair.newInstance("Avg Score",
+				(prev, curr) -> curr.getPlayers().stream()//
+						.mapToDouble(Player::getFitness)//
+						.average().getAsDouble()));
 
-		entry.avgSpecies = generation.getSpecies().stream()//
-				.map(Species::getPlayers)//
-				.mapToInt(List::size)//
-				.average().getAsDouble();
+		columns.add(Pair.newInstance("# Species", (prev, curr) -> curr.getSpecies().size()));
+		columns.add(Pair.newInstance("Avg Species Size",
+				(prev, curr) -> curr.getSpecies().stream()//
+						.map(Species::getPlayers)//
+						.mapToInt(List::size)//
+						.average().getAsDouble()));
 
-		List<Long> currSpeciesIds = generation.getSpecies().stream().map(Species::getId).collect(Collectors.toList());
-		List<Long> prevSpeciesIds;
-		if (prevGeneration != null) {
-			prevSpeciesIds = prevGeneration.getSpecies().stream().map(Species::getId).collect(Collectors.toList());
-		} else {
-			prevSpeciesIds = new ArrayList<>();
-		}
-		entry.addSpecies = (int) currSpeciesIds.stream()//
-				.filter(id -> !prevSpeciesIds.contains(id))//
-				.count();
+		columns.add(Pair.newInstance("# Species Add", (prev, curr) -> {
+			List<Long> currSpeciesIds = curr.getSpecies().stream().map(Species::getId).collect(Collectors.toList());
+			List<Long> prevSpeciesIds;
+			if (prev != null) {
+				prevSpeciesIds = prev.getSpecies().stream().map(Species::getId).collect(Collectors.toList());
+			} else {
+				prevSpeciesIds = new ArrayList<>();
+			}
+			return currSpeciesIds.stream()//
+					.filter(id -> !prevSpeciesIds.contains(id))//
+					.count();
+		}));
+		columns.add(Pair.newInstance("# Species Remove", (prev, curr) -> {
+			List<Long> currSpeciesIds = curr.getSpecies().stream().map(Species::getId).collect(Collectors.toList());
+			List<Long> prevSpeciesIds;
+			if (prev != null) {
+				prevSpeciesIds = prev.getSpecies().stream().map(Species::getId).collect(Collectors.toList());
+			} else {
+				prevSpeciesIds = new ArrayList<>();
+			}
+			return prevSpeciesIds.stream()//
+					.filter(id -> !currSpeciesIds.contains(id))//
+					.count();
+		}));
+		columns.add(Pair.newInstance("# Nodes",
+				(prev, curr) -> curr.getPlayers().stream()//
+						.map(Player::getGene)//
+						.map(Gene::getNodes)//
+						.mapToInt(List::size)//
+						.sum()));
+		columns.add(Pair.newInstance("Avg Nodes",
+				(prev, curr) -> curr.getPlayers().stream()//
+						.map(Player::getGene)//
+						.map(Gene::getNodes)//
+						.mapToInt(List::size)//
+						.average().getAsDouble()));
 
-		entry.removeSpecies = (int) prevSpeciesIds.stream()//
-				.filter(id -> !currSpeciesIds.contains(id))//
-				.count();
+		columns.add(Pair.newInstance("# Conns x Player",
+				(prev, curr) -> curr.getPlayers().stream()//
+						.map(Player::getGene)//
+						.map(Gene::getConnections)//
+						.mapToInt(List::size)//
+						.sum()));
 
-		entry.speciesIds = currSpeciesIds.stream().sorted().map(String::valueOf).collect(Collectors.joining(", "));
+		columns.add(Pair.newInstance("Avg Conns x Player",
+				(prev, curr) -> curr.getPlayers().stream()//
+						.map(Player::getGene)//
+						.map(Gene::getConnections)//
+						.mapToInt(List::size)//
+						.average().getAsDouble()));
 
-		entry.nodes = generation.getPlayers().stream()//
-				.map(Player::getGene)//
-				.map(Gene::getNodes)//
-				.mapToInt(List::size)//
-				.sum();
+		columns.add(Pair.newInstance("# Active Conns x Player",
+				(prev, curr) -> curr.getPlayers().stream()//
+						.map(Player::getGene)//
+						.mapToLong(g -> g.getConnections().stream().filter(Connection::isEnabled).count())//
+						.count()));
 
-		entry.avgNodes = generation.getPlayers().stream()//
-				.map(Player::getGene)//
-				.map(Gene::getNodes)//
-				.mapToInt(List::size)//
-				.average().getAsDouble();
+		columns.add(Pair.newInstance("Avg Active Conns x Player",
+				(prev, curr) -> curr.getPlayers().stream()//
+						.map(Player::getGene)//
+						.mapToLong(g -> g.getConnections().stream().filter(Connection::isEnabled).count())//
+						.average().getAsDouble()));
 
-		entry.connections = generation.getPlayers().stream()//
-				.map(Player::getGene)//
-				.map(Gene::getConnections)//
-				.mapToInt(List::size)//
-				.sum();
+		columns.add(Pair.newInstance("Min Conn W", (prev, curr) -> getConnectionWeights(curr).min().getAsDouble()));
+		columns.add(Pair.newInstance("Max Conn W", (prev, curr) -> getConnectionWeights(curr).max().getAsDouble()));
+		columns.add(Pair.newInstance("Avg Conn W", (prev, curr) -> getConnectionWeights(curr).average().getAsDouble()));
+		columns.add(Pair.newInstance("Min distance", (prev, curr) -> getDistanceStream(curr).min().getAsDouble()));
+		columns.add(Pair.newInstance("Max distance", (prev, curr) -> getDistanceStream(curr).max().getAsDouble()));
+		columns.add(Pair.newInstance("Avg distance", (prev, curr) -> getDistanceStream(curr).average().getAsDouble()));
+		columns.add(Pair.newInstance("Min Matching", (prev, curr) -> getMatchingGenes(curr).min().getAsDouble()));
+		columns.add(Pair.newInstance("Max Matching", (prev, curr) -> getMatchingGenes(curr).max().getAsDouble()));
+		columns.add(Pair.newInstance("Avg Matching", (prev, curr) -> getMatchingGenes(curr).average().getAsDouble()));
+		columns.add(Pair.newInstance("Min Disjoint", (prev, curr) -> getDisjointGenes(curr).min().getAsDouble()));
+		columns.add(Pair.newInstance("Max Disjoint", (prev, curr) -> getDisjointGenes(curr).max().getAsDouble()));
+		columns.add(Pair.newInstance("Avg Disjoint", (prev, curr) -> getDisjointGenes(curr).average().getAsDouble()));
+		columns.add(
+				Pair.newInstance("Min Avg Weight Diff", (prev, curr) -> getAvgWeightDiff(curr).min().getAsDouble()));
+		columns.add(
+				Pair.newInstance("Max Avg Weight Diff", (prev, curr) -> getAvgWeightDiff(curr).max().getAsDouble()));
+		columns.add(Pair.newInstance("Avg Avg Weight Diff",
+				(prev, curr) -> getAvgWeightDiff(curr).average().getAsDouble()));
 
-		entry.avgConnections = generation.getPlayers().stream()//
-				.map(Player::getGene)//
-				.map(Gene::getConnections)//
-				.mapToInt(List::size)//
-				.average().getAsDouble();
-
-		return entry;
+		return columns;
 	}
 
-	private double avgConnections;
-	private double avgNodes;
-	private double avgScore;
-	private Player bestPlayer;
-	private double bestScore;
-	private int connections;
-	private int generation;
-	private int nodes;
-	private int population;
-	private int species;
-	private int addSpecies;
-	private int removeSpecies;
-	private double avgSpecies;
-	private String speciesIds;
+	private static DoubleStream getConnectionWeights(Generation generation) {
 
-	public List<String> getTextAnalysis() {
-
-		List<String> row = new ArrayList<>();
-		row.add(String.valueOf(generation));
-		row.add(String.valueOf(population));
-		row.add(String.valueOf(bestPlayer.getGeneId()));
-		row.add(String.valueOf(StringUtil.format(bestScore)));
-		row.add(String.valueOf(StringUtil.format(avgScore)));
-		row.add(String.valueOf(species));
-		row.add(String.valueOf(StringUtil.format(avgSpecies)));
-		row.add(String.valueOf(addSpecies));
-		row.add(String.valueOf(removeSpecies));
-		row.add(String.valueOf(nodes));
-		row.add(String.valueOf(StringUtil.format(avgNodes)));
-		row.add(String.valueOf(connections));
-		row.add(String.valueOf(StringUtil.format(avgConnections)));
-		row.add(speciesIds);
-		return row;
+		return generation.getPlayers().stream()//
+				.map(Player::getGene)//
+				.flatMap(g -> g.getConnections().stream())//
+				.mapToDouble(Connection::getWeight);
 	}
 
+	private static DoubleStream getDistanceStream(Generation generation) {
+
+		return getOperationStream(generation, (g1, g2) -> generation.getCompatibilityDistance().getDistance(g1, g2));
+	}
+
+	private static DoubleStream getMatchingGenes(Generation generation) {
+
+		return getOperationStream(generation, (g1, g2) -> (double) g1.getMatchingGenesCount(g2));
+	}
+
+	private static DoubleStream getDisjointGenes(Generation generation) {
+
+		return getOperationStream(generation, (g1, g2) -> (double) g1.getDisjointGenesCount(g2));
+	}
+
+	private static DoubleStream getAvgWeightDiff(Generation generation) {
+
+		return getOperationStream(generation,
+				(g1, g2) -> (double) g1.getAvgWeightDifference(g2, g1.getMatchingGenesCount(g2)));
+	}
+
+	private static DoubleStream getOperationStream(Generation generation, BiFunction<Gene, Gene, Double> function) {
+
+		return generation.getPlayers().stream()//
+				.map(Player::getGene)//
+				.flatMapToDouble(gene1 -> generation.getPlayers().stream()//
+						.map(Player::getGene)//
+						.filter(gene2 -> gene2.getId() != gene1.getId()) //
+						.mapToDouble(gene2 -> function.apply(gene1, gene2)));
+	}
 }

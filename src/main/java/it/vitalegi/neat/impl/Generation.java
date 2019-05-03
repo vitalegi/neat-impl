@@ -10,14 +10,15 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import it.vitalegi.neat.impl.feedforward.FeedForward;
 import it.vitalegi.neat.impl.function.CompatibilityDistance;
 import it.vitalegi.neat.impl.function.SharedFitnessValue;
+import it.vitalegi.neat.impl.player.Player;
+import it.vitalegi.neat.impl.player.PlayerFactory;
 
 public class Generation {
 
 	// numero di specie da mantenere a prescindere dal miglioramento di rate
-	public static final int BEST_SPECIES_TO_PRESERVE = 5;
+	public static final int BEST_SPECIES_TO_PRESERVE = 2;
 	// nel caso di valutazione della crescita, generazione di riferimento
 	public static final int COMPARE_AGAINST_GEN = 10;
 	// nel caso di valutazione della crescita, tasso di crescita minimo rispetto
@@ -26,11 +27,11 @@ public class Generation {
 	// dimensione minima per considerare rilevante una specie
 	public static final int MIN_SPECIES_SIZE_TO_BE_RELEVANT = 5;
 	// probabilita' di aggiungere una connessione
-	public static final double MUTATE_CONNECTION_PROBABILITY = 0.30;
+	public static final double MUTATE_CONNECTION_PROBABILITY = 0.20;
 	// probabilita' di abilitare/disabilitare una connessione
 	public static final double MUTATE_ENABLE_PROBABILITY = 0.05;
 	// probabilita' di aggiungere un nodo
-	public static final double MUTATE_ADD_NODE_PROBABILITY = 0.20;
+	public static final double MUTATE_ADD_NODE_PROBABILITY = 0.15;
 	// probability to remove a node
 	public static final double MUTATE_REMOVE_NODE_PROBABILITY = 0;
 	// percentuale di geni da eliminare ad ogni nuova generazione
@@ -38,21 +39,25 @@ public class Generation {
 	// numero di generazioni entro cui considerare vecchia una specie
 	public static final int YOUNG_GEN = 15;
 
-	public static Generation createGen0(PlayerFactory factory, int inputs, int outputs, int size,
+	public static Generation createGen0(PlayerFactory factory, int inputs, int outputs, int biases, int size,
 			CompatibilityDistance compatibilityDistance) {
 		Generation gen = new Generation(new UniqueId(), factory, 0, compatibilityDistance);
 
 		long[] inputIds = new long[inputs];
-		long[] outputIds = new long[outputs];
 		for (int i = 0; i < inputIds.length; i++) {
 			inputIds[i] = gen.uniqueId.nextNodeId();
 		}
+		long[] outputIds = new long[outputs];
 		for (int i = 0; i < outputIds.length; i++) {
 			outputIds[i] = gen.uniqueId.nextNodeId();
 		}
+		long[] biasIds = new long[biases];
+		for (int i = 0; i < biasIds.length; i++) {
+			biasIds[i] = gen.uniqueId.nextNodeId();
+		}
 		for (int i = 0; i < size; i++) {
 			Player player = factory.newPlayer(//
-					Gene.newInstance(gen.uniqueId, gen.uniqueId.nextNodeId(), inputIds, outputIds)//
+					Gene.newInstance(gen.uniqueId, gen.uniqueId.nextNodeId(), inputIds, outputIds, biasIds)//
 							.mutateAddRandomConnection() //
 							.mutate(MUTATE_ADD_NODE_PROBABILITY, MUTATE_REMOVE_NODE_PROBABILITY,
 									MUTATE_CONNECTION_PROBABILITY, MUTATE_ENABLE_PROBABILITY));
@@ -346,12 +351,19 @@ public class Generation {
 				log.debug("Specie {} ha rappresentanza minima, copio campione.", speciesToPreserve.getId());
 			}
 			addPlayer(factory.newPlayer(champion.clone()), nextSpeciesGen);
+		} else if (isTopScoreSpecies(speciesToPreserve)) {
+			if (log.isDebugEnabled()) {
+				log.debug("Specie {} e' tra le migliori, copio campione.", speciesToPreserve.getId());
+			}
+			addPlayer(factory.newPlayer(champion.clone()), nextSpeciesGen);
 		} else {
 			if (log.isDebugEnabled()) {
 				log.debug("Specie {} NON ha rappresentanza minima, muto campione.", speciesToPreserve.getId());
 			}
-			addPlayer(factory.newPlayer(champion.mutate(MUTATE_ADD_NODE_PROBABILITY, MUTATE_REMOVE_NODE_PROBABILITY,
-					MUTATE_CONNECTION_PROBABILITY, MUTATE_ENABLE_PROBABILITY)), nextSpeciesGen);
+			Gene cloned = champion.clone();
+			Gene mutated = cloned.mutate(MUTATE_ADD_NODE_PROBABILITY, MUTATE_REMOVE_NODE_PROBABILITY,
+					MUTATE_CONNECTION_PROBABILITY, MUTATE_ENABLE_PROBABILITY);
+			addPlayer(factory.newPlayer(mutated), nextSpeciesGen);
 		}
 		return nextSpeciesGen;
 	}

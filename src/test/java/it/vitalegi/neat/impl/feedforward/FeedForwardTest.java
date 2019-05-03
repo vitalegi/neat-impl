@@ -37,7 +37,7 @@ public class FeedForwardTest {
 	@Test
 	public void testIfNoConnections() {
 		Gene gene = Gene.newInstance(uniqueId, 1, 2);
-		double[] outputs = new FeedForward(gene).feedForward(new double[] { 1.0 });
+		double[] outputs = new FeedForwardImpl(gene).feedForward(new double[] { 1.0 });
 		Assert.assertArrayEquals(new double[] { 0.5, 0.5 }, outputs, 0.0001);
 	}
 }

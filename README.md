@@ -33,3 +33,9 @@ mvn clean package
 ```cmd
 java -jar target\neat-impl-0.0.1.jar
 ```
+
+## Install to Mvn
+
+```cmd
+mvn install:install-file -Dfile=target\neat-impl-0.0.1.jar -DgroupId=it.vitalegi -DartifactId=neat-impl -Dversion=0.0.1 -Dpackaging=jar
+```

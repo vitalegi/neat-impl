@@ -112,10 +112,10 @@ public class GeneTest {
 		long in1 = 1;
 		long out1 = 2;
 
-		Gene gene1 = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 });
+		Gene gene1 = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 }, new long[0]);
 		Connection con1 = gene1.addConnection(in1, out1, 1.0, true);
 
-		Gene gene2 = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 });
+		Gene gene2 = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 }, new long[0]);
 		Connection con2 = gene2.addConnection(in1, out1, 1.0, true);
 
 		Assert.assertTrue(con1.getId() == con2.getId());
@@ -145,10 +145,10 @@ public class GeneTest {
 		long in1 = 1;
 		long out1 = 2;
 
-		Gene gene1 = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 });
+		Gene gene1 = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 }, new long[0]);
 		Connection con1 = gene1.addConnection(in1, out1, 1.0, true);
 
-		Gene gene2 = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 });
+		Gene gene2 = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 }, new long[0]);
 		Connection con2 = gene2.addConnection(in1, out1, 1.0, true);
 
 		gene1.mutateAddRandomNode();
@@ -162,7 +162,7 @@ public class GeneTest {
 		long in1 = 1;
 		long out1 = 2;
 
-		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 });
+		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 }, new long[0]);
 
 		gene.addConnection(in1, out1, 1.0, true);
 		Assert.assertTrue(gene.checkConnected(gene.getNodeById(in1), gene.getNodeById(out1)));
@@ -175,7 +175,7 @@ public class GeneTest {
 		long h1 = 3;
 		long h2 = 4;
 
-		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 });
+		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 }, new long[0]);
 
 		gene.addConnection(in1, out1, 1.0, true);
 		gene.addNode(h1, gene.getConnection(in1, out1));
@@ -188,7 +188,7 @@ public class GeneTest {
 		long in1 = 1;
 		long out1 = 2;
 
-		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 });
+		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 }, new long[0]);
 
 		Assert.assertFalse(gene.checkConnected(gene.getNodeById(in1), gene.getNodeById(out1)));
 	}
@@ -244,9 +244,11 @@ public class GeneTest {
 		Gene offspring = gene1.offspring(gene2);
 		Assert.assertNotNull(offspring.getConnectionById(10));
 		Assert.assertNotNull(offspring.getConnectionById(20));
-		Assert.assertNotNull(offspring.getConnectionById(30));
-		Assert.assertNotNull(offspring.getConnectionById(40));
-		Assert.assertEquals(4, offspring.getSize());
+
+		Connection c30 = offspring.getConnectionById(30);
+		Connection c40 = offspring.getConnectionById(40);
+		Assert.assertTrue((c30 != null && c40 == null) || (c30 == null && c40 != null));
+		Assert.assertEquals(3, offspring.getSize());
 	}
 
 	@Test
@@ -260,8 +262,11 @@ public class GeneTest {
 		gene2.addConnection(40, 6, 5, 0, true);
 
 		Gene offspring = gene1.offspring(gene2);
-		Assert.assertNotNull(offspring.getConnectionById(30));
-		Assert.assertEquals(2, offspring.getSize());
+
+		Connection c30 = offspring.getConnectionById(30);
+		Connection c40 = offspring.getConnectionById(40);
+		Assert.assertTrue((c30 != null && c40 == null) || (c30 == null && c40 != null));
+		Assert.assertEquals(1, offspring.getSize());
 	}
 
 	@Test
@@ -269,7 +274,7 @@ public class GeneTest {
 		long in1 = 1;
 		long out1 = 2;
 
-		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 });
+		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 }, new long[0]);
 
 		gene.addConnection(in1, out1, 1.0, true);
 		Assert.assertFalse(gene.isValidConnection(gene.getNodeById(in1), gene.getNodeById(out1)));
@@ -279,7 +284,7 @@ public class GeneTest {
 	public void testIsValidConnectionIfExistsShouldNotBeValid() {
 		long in1 = 1;
 		long out1 = 2;
-		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 });
+		Gene gene = Gene.newInstance(uniqueId, 0, new long[] { in1 }, new long[] { out1 }, new long[0]);
 		gene.addConnection(in1, out1, 1, false);
 		Assert.assertFalse(gene.isValidConnection(gene.getNodeById(in1), gene.getNodeById(out1)));
 	}

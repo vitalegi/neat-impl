@@ -20,6 +20,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import it.vitalegi.neat.impl.function.CompatibilityDistance;
 import it.vitalegi.neat.impl.function.CompatibilityDistanceImpl;
+import it.vitalegi.neat.impl.player.DummyPlayer;
+import it.vitalegi.neat.impl.player.DummyPlayerFactory;
+import it.vitalegi.neat.impl.player.Player;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -46,9 +49,9 @@ public class GenerationTest {
 	@Test
 	public void testComputeFitnesses() {
 		Species species1 = Species.newInstance(0, 14, null);
-		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 10));
-		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 12));
-		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 11));
+		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0, 0), 10));
+		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0, 0), 12));
+		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0, 0), 11));
 
 		generation.addSpecies(species1);
 
@@ -61,7 +64,7 @@ public class GenerationTest {
 
 	@Test
 	public void testGenerationInitializer() {
-		Generation gen = Generation.createGen0(playerFactory, 2, 1, 5, new CompatibilityDistanceImpl(0.1, 1, 2));
+		Generation gen = Generation.createGen0(playerFactory, 2, 1, 0, 5, new CompatibilityDistanceImpl(0.1, 1, 2));
 		log.info(gen.stringify());
 		Gene gene2 = Gene.newInstance(generation.getUniqueId(), 2, 1);
 		gene2.addConnection(gene2.getSortedInputNodes().get(0), gene2.getSortedOutputNodes().get(0), 1, true);
@@ -149,8 +152,8 @@ public class GenerationTest {
 	@Test
 	public void testGetRandomPlayerPreserveWeights() {
 		Map<Long, List<Player>> players = new HashMap<>();
-		players.put(1L, Arrays.asList(Player.newPlayer(Gene.newInstance(generation.getUniqueId(), 0, 0, 0), 1)));
-		players.put(2L, Arrays.asList(Player.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 99)));
+		players.put(1L, Arrays.asList(new DummyPlayer(Gene.newInstance(generation.getUniqueId(), 0, 0, 0, 0), 1)));
+		players.put(2L, Arrays.asList(new DummyPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0, 0), 99)));
 
 		int[] indexes = new int[2];
 		int sampleSize = 100;
@@ -166,7 +169,7 @@ public class GenerationTest {
 
 		generation.setGenNumber(16);
 		Species species1 = Species.newInstance(100, 0, null);
-		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 10));
+		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0, 0), 10));
 		generation.addSpecies(species1);
 		for (int i = 0; i <= 16; i++) {
 			species1.addFitness(i);
@@ -182,7 +185,7 @@ public class GenerationTest {
 
 		generation.setGenNumber(5);
 		Species species1 = Species.newInstance(100, 6, null);
-		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0), 10));
+		species1.addPlayer(playerFactory.newPlayer(Gene.newInstance(generation.getUniqueId(), 1, 0, 0, 0), 10));
 		generation.addSpecies(species1);
 		Assert.assertTrue(generation.getSpeciesToPreserve().stream().anyMatch(s -> s.getId() == 100));
 	}
@@ -190,7 +193,7 @@ public class GenerationTest {
 	@Test
 	public void testIsTopScoreSpecies() {
 		CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
-		Generation gen = Generation.createGen0(playerFactory, 2, 1, 5, cd);
+		Generation gen = Generation.createGen0(playerFactory, 2, 1, 0, 5, cd);
 
 		Species s1 = Species.newInstance(1, 0, cd);
 		s1.getHistoryBestFitnesses().add(100.0);
@@ -235,7 +238,7 @@ public class GenerationTest {
 
 	@Test
 	public void testNextGeneration() {
-		Generation gen = Generation.createGen0(playerFactory, 2, 1, 5, new CompatibilityDistanceImpl(0.1, 1, 2));
+		Generation gen = Generation.createGen0(playerFactory, 2, 1, 0, 5, new CompatibilityDistanceImpl(0.1, 1, 2));
 		log.info(gen.stringify());
 		Generation nextGen = gen.nextGeneration();
 		log.info(nextGen.stringify());
@@ -284,7 +287,14 @@ public class GenerationTest {
 	public void testPreserveSpeciesShouldMutateChampionIfIrrelevantSpecies() {
 		CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
 
-		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1, cd);
+		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1, cd) {
+
+			@Override
+			protected boolean isTopScoreSpecies(Species species) {
+				return false;
+			}
+
+		};
 
 		Gene gene = Mockito.mock(Gene.class);
 
@@ -294,6 +304,7 @@ public class GenerationTest {
 				return false;
 			}
 		};
+		Mockito.when(gene.clone()).thenReturn(gene);
 
 		targetGen.preserveSpecies(oldSpecies, gene);
 		Mockito.verify(gene, Mockito.times(1)).mutate(Generation.MUTATE_ADD_NODE_PROBABILITY,

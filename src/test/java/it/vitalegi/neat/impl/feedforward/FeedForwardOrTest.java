@@ -34,7 +34,7 @@ public class FeedForwardOrTest {
 	private void bool(String name, Gene gene, int in1, int in2, int out) {
 		String desc = name + "(" + in1 + "," + in2 + ") = " + out;
 		log.info("Start {}", desc);
-		double[] outputs = new FeedForward(gene).feedForward(new double[] { in1, in2 });
+		double[] outputs = new FeedForwardImpl(gene).feedForward(new double[] { in1, in2 });
 		log.info("End {}", desc);
 		int o = outputs[0] > 0.6 ? 1 : 0;
 		Assert.assertEquals(desc, out, o);

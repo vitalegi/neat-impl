@@ -11,6 +11,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import it.vitalegi.neat.impl.player.DummyPlayer;
+import it.vitalegi.neat.impl.player.DummyPlayerFactory;
+import it.vitalegi.neat.impl.player.Player;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
@@ -20,6 +24,7 @@ public class SpeciesTest {
 	public static void initClass() {
 		Random.init();
 	}
+
 	private DummyPlayerFactory playerFactory;
 
 	private UniqueId uniqueId;
@@ -27,9 +32,9 @@ public class SpeciesTest {
 	@Test
 	public void getBestPlayers() {
 		Species species = Species.newInstance(0, 6, null);
-		species.addPlayer(Player.newPlayer(Gene.newInstance(uniqueId), 5));
-		species.addPlayer(Player.newPlayer(Gene.newInstance(uniqueId), 10));
-		species.addPlayer(Player.newPlayer(Gene.newInstance(uniqueId), 1));
+		species.addPlayer(new DummyPlayer(Gene.newInstance(uniqueId), 5));
+		species.addPlayer(new DummyPlayer(Gene.newInstance(uniqueId), 10));
+		species.addPlayer(new DummyPlayer(Gene.newInstance(uniqueId), 1));
 
 		List<Player> best = species.getBestPlayers(species, 1);
 
@@ -47,9 +52,9 @@ public class SpeciesTest {
 	public void testGetChampion() {
 		playerFactory.setFitness(5);
 		Species species = Species.newInstance(0, 6, null);
-		species.addPlayer(playerFactory.newPlayer(Gene.newInstance(uniqueId, 1, 0, 0)));
+		species.addPlayer(playerFactory.newPlayer(Gene.newInstance(uniqueId, 1, 0, 0, 0)));
 		playerFactory.setFitness(6);
-		species.addPlayer(playerFactory.newPlayer(Gene.newInstance(uniqueId, 2, 0, 0)));
+		species.addPlayer(playerFactory.newPlayer(Gene.newInstance(uniqueId, 2, 0, 0, 0)));
 		Assert.assertEquals(2, species.getChampion().getGene().getId());
 	}
 

@@ -1,4 +1,6 @@
-package it.vitalegi.neat.impl;
+package it.vitalegi.neat.impl.player;
+
+import it.vitalegi.neat.impl.Gene;
 
 public class DummyPlayerFactory implements PlayerFactory {
 
@@ -6,7 +8,7 @@ public class DummyPlayerFactory implements PlayerFactory {
 
 	@Override
 	public Player newPlayer(Gene gene) {
-		Player p = Player.newPlayer(gene);
+		DummyPlayer p = new DummyPlayer();
 		p.setGene(gene);
 		p.setFitness(fitness);
 		return p;
