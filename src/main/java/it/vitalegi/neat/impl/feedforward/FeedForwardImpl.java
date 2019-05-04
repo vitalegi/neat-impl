@@ -12,21 +12,21 @@ import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import it.vitalegi.neat.impl.Connection;
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.Node;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
 
+@Service
 public class FeedForwardImpl implements FeedForward {
-
-	Gene gene;
-	Map<Long, GraphNode> graph;
 
 	Logger log = LoggerFactory.getLogger(FeedForwardImpl.class);
 
-	public FeedForwardImpl(Gene gene) {
-		this.gene = gene;
-	}
+	@Autowired
+	GeneServiceImpl geneService;
 
 	@Override
 	public double[] initInputs(double[] inputs, double[] biases) {
@@ -42,37 +42,38 @@ public class FeedForwardImpl implements FeedForward {
 	}
 
 	@Override
-	public double[] feedForward(double[] inputs) {
+	public double[] feedForward(Gene gene, double[] inputs) {
 
 		if (gene.getInputs() != inputs.length) {
 			throw new IllegalArgumentException(
 					"Input size is invalid. Expected " + gene.getInputs() + " found " + inputs.length);
 		}
-		initGraph();
+
+		Map<Long, GraphNode> graph = initGraph(gene);
 
 		// initialize input connections
-		List<Long> inputNodes = gene.getSortedInputNodes();
-		List<Long> outputNodes = gene.getSortedOutputNodes();
-		inputNodes.forEach(this::initIfNotExists);
-		outputNodes.forEach(this::initIfNotExists);
+		List<Long> inputNodes = geneService.getSortedInputNodes(gene);
+		List<Long> outputNodes = geneService.getSortedOutputNodes(gene);
+		inputNodes.forEach(n -> initIfNotExists(graph, n));
+		outputNodes.forEach(n -> initIfNotExists(graph, n));
 
 		if (log.isDebugEnabled()) {
-			log.debug("Graph with nodes: {}", graphToString());
+			log.debug("Graph with nodes: {}", graphToString(gene, graph));
 		}
-		initInputConnections(inputNodes, inputs);
+		initInputConnections(graph, inputNodes, inputs);
 		if (log.isDebugEnabled()) {
-			log.debug("Graph initialized: {}", graphToString());
+			log.debug("Graph initialized: {}", graphToString(gene, graph));
 		}
-		Iterator<Long> toProcess = getNodesInFeedingOrder().iterator();
+		Iterator<Long> toProcess = getNodesInFeedingOrder(gene, graph).iterator();
 		while (toProcess.hasNext()) {
 			GraphNode node = graph.get(toProcess.next());
 			if (log.isDebugEnabled()) {
-				log.debug("Feeding {}: {}", node.getId(), graphToString());
+				log.debug("Feeding {}: {}", node.getId(), graphToString(gene, graph));
 			}
 			node.feedSuccessors();
 		}
 		if (log.isDebugEnabled()) {
-			log.debug("Graph after hidden layer: {}", graphToString());
+			log.debug("Graph after hidden layer: {}", graphToString(gene, graph));
 		}
 		double[] outputs = new double[outputNodes.size()];
 		for (int i = 0; i < outputNodes.size(); i++) {
@@ -80,7 +81,7 @@ public class FeedForwardImpl implements FeedForward {
 			outputs[i] = node.calculateOutputValue();
 		}
 		if (log.isDebugEnabled()) {
-			log.debug("Graph end: {}", graphToString());
+			log.debug("Graph end: {}", graphToString(gene, graph));
 		}
 		return outputs;
 	}
@@ -89,7 +90,7 @@ public class FeedForwardImpl implements FeedForward {
 		return BigDecimal.valueOf(value).setScale(2, RoundingMode.HALF_UP).toPlainString();
 	}
 
-	protected List<Long> getNodesInFeedingOrder() {
+	protected List<Long> getNodesInFeedingOrder(Gene gene, Map<Long, GraphNode> graph) {
 		List<Long> nodes = new ArrayList<>();
 
 		List<Long> pendingNodes = graph.keySet().stream().collect(Collectors.toList());
@@ -99,20 +100,20 @@ public class FeedForwardImpl implements FeedForward {
 			for (int i = 0; i < pendingNodes.size(); i++) {
 				GraphNode curr = graph.get(pendingNodes.get(i));
 
-				if (!isSuccessor(pendingNodes, curr)) {
+				if (!isSuccessor(graph, pendingNodes, curr)) {
 					nodes.add(curr.getId());
 					pendingNodes.remove(i);
 					found = true;
 				}
 			}
 			if (!found) {
-				loopDetected(pendingNodes);
+				loopDetected(gene, pendingNodes);
 			}
 		}
 		return nodes;
 	}
 
-	protected boolean isSuccessor(List<Long> pendingNodes, GraphNode node) {
+	protected boolean isSuccessor(Map<Long, GraphNode> graph, List<Long> pendingNodes, GraphNode node) {
 		for (int j = 0; j < pendingNodes.size(); j++) {
 			GraphNode possiblePredecessor = graph.get(pendingNodes.get(j));
 			if (possiblePredecessor.isPredecessor(node.getId())) {
@@ -122,12 +123,12 @@ public class FeedForwardImpl implements FeedForward {
 		return false;
 	}
 
-	private void loopDetected(List<Long> pendingNodes) {
+	private void loopDetected(Gene gene, List<Long> pendingNodes) {
 		if (log.isErrorEnabled()) {
 
 			log.error("Individuato un loop tra i nodi {}.",
 					pendingNodes.stream().map(String::valueOf).collect(Collectors.joining(", ")));
-			log.error("GENE: {}", gene.stringify(false));
+			log.error("GENE: {}", geneService.stringify(gene, false));
 
 			StringBuilder sb = new StringBuilder();
 			gene.getConnections().stream()//
@@ -141,10 +142,9 @@ public class FeedForwardImpl implements FeedForward {
 		throw new RuntimeException("Loop detected.");
 	}
 
-	@Override
-	public String graphToString() {
+	public String graphToString(Gene gene, Map<Long, GraphNode> graph) {
 		StringBuilder sb = new StringBuilder();
-		List<Long> nodeIds = getNodesInFeedingOrder();
+		List<Long> nodeIds = getNodesInFeedingOrder(gene, graph);
 		nodeIds.forEach(nodeId -> {
 			GraphNode node = graph.get(nodeId);
 
@@ -157,15 +157,15 @@ public class FeedForwardImpl implements FeedForward {
 		return sb.toString();
 	}
 
-	protected Map<Long, GraphNode> initGraph() {
-		graph = new HashMap<>();
+	protected Map<Long, GraphNode> initGraph(Gene gene) {
+		Map<Long, GraphNode> graph = new HashMap<>();
 
 		List<Connection> connections = gene.getConnections();
 
 		// init nodes
 		connections.stream().forEach(c -> {
-			initIfNotExists(c.getFromNode());
-			initIfNotExists(c.getToNode());
+			initIfNotExists(graph, c.getFromNode());
+			initIfNotExists(graph, c.getToNode());
 		});
 
 		// create connections
@@ -176,17 +176,17 @@ public class FeedForwardImpl implements FeedForward {
 		return graph;
 	}
 
-	protected void initIfNotExists(long id) {
+	protected void initIfNotExists(Map<Long, GraphNode> graph, long id) {
 		if (!graph.containsKey(id)) {
 			graph.put(id, new GraphNode(id));
 		}
 	}
 
-	protected void initIfNotExists(Node node) {
-		initIfNotExists(node.getId());
+	protected void initIfNotExists(Map<Long, GraphNode> graph, Node node) {
+		initIfNotExists(graph, node.getId());
 	}
 
-	protected void initInputConnections(List<Long> inputNodes, double[] inputs) {
+	protected void initInputConnections(Map<Long, GraphNode> graph, List<Long> inputNodes, double[] inputs) {
 
 		for (int i = 0; i < inputNodes.size(); i++) {
 			Long nodeId = inputNodes.get(i);
@@ -194,6 +194,10 @@ public class FeedForwardImpl implements FeedForward {
 			GraphNode node = graph.get(nodeId);
 			node.setInputsSum(nodeWeight);
 		}
+	}
+
+	public void setGeneService(GeneServiceImpl geneService) {
+		this.geneService = geneService;
 	}
 
 }

@@ -11,14 +11,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import it.vitalegi.neat.AbstractTest;
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.Random;
 import it.vitalegi.neat.impl.UniqueId;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
+import it.vitalegi.neat.impl.util.ContextUtil;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
-public class FeedForwardTest {
+public class FeedForwardTest extends AbstractTest {
 
 	@BeforeClass
 	public static void initClass() {
@@ -32,12 +35,13 @@ public class FeedForwardTest {
 	@Before
 	public void init() {
 		uniqueId = new UniqueId();
+		init(ContextUtil.builder().inject());
 	}
 
 	@Test
 	public void testIfNoConnections() {
-		Gene gene = Gene.newInstance(uniqueId, 1, 2);
-		double[] outputs = new FeedForwardImpl(gene).feedForward(new double[] { 1.0 });
+		Gene gene = geneService.newInstance(uniqueId, 1, 2);
+		double[] outputs = feedForward.feedForward(gene, new double[] { 1.0 });
 		Assert.assertArrayEquals(new double[] { 0.5, 0.5 }, outputs, 0.0001);
 	}
 }

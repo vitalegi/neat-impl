@@ -7,16 +7,28 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import it.vitalegi.neat.impl.Connection;
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.Generation;
 import it.vitalegi.neat.impl.Species;
+import it.vitalegi.neat.impl.function.CompatibilityDistance;
 import it.vitalegi.neat.impl.player.Player;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
 import it.vitalegi.neat.impl.util.Pair;
 
+@Service
 public class GenerationEntry {
 
-	public static List<Pair<String, Metric>> getColumns() {
+	@Autowired
+	GeneServiceImpl geneService;
+
+	@Autowired
+	CompatibilityDistance compatibilityDistance;
+
+	public List<Pair<String, Metric>> getColumns() {
 		List<Pair<String, Metric>> columns = new ArrayList<>();
 		columns.add(Pair.newInstance("Gen", (prev, curr) -> curr.getGenNumber()));
 
@@ -33,17 +45,15 @@ public class GenerationEntry {
 				.findFirst().orElse(null)//
 				.getFitness()));
 
-		columns.add(Pair.newInstance("Avg Score",
-				(prev, curr) -> curr.getPlayers().stream()//
-						.mapToDouble(Player::getFitness)//
-						.average().getAsDouble()));
+		columns.add(Pair.newInstance("Avg Score", (prev, curr) -> curr.getPlayers().stream()//
+				.mapToDouble(Player::getFitness)//
+				.average().getAsDouble()));
 
 		columns.add(Pair.newInstance("# Species", (prev, curr) -> curr.getSpecies().size()));
-		columns.add(Pair.newInstance("Avg Species Size",
-				(prev, curr) -> curr.getSpecies().stream()//
-						.map(Species::getPlayers)//
-						.mapToInt(List::size)//
-						.average().getAsDouble()));
+		columns.add(Pair.newInstance("Avg Species Size", (prev, curr) -> curr.getSpecies().stream()//
+				.map(Species::getPlayers)//
+				.mapToInt(List::size)//
+				.average().getAsDouble()));
 
 		columns.add(Pair.newInstance("# Species Add", (prev, curr) -> {
 			List<Long> currSpeciesIds = curr.getSpecies().stream().map(Species::getId).collect(Collectors.toList());
@@ -69,44 +79,38 @@ public class GenerationEntry {
 					.filter(id -> !currSpeciesIds.contains(id))//
 					.count();
 		}));
-		columns.add(Pair.newInstance("# Nodes",
-				(prev, curr) -> curr.getPlayers().stream()//
-						.map(Player::getGene)//
-						.map(Gene::getNodes)//
-						.mapToInt(List::size)//
-						.sum()));
-		columns.add(Pair.newInstance("Avg Nodes",
-				(prev, curr) -> curr.getPlayers().stream()//
-						.map(Player::getGene)//
-						.map(Gene::getNodes)//
-						.mapToInt(List::size)//
-						.average().getAsDouble()));
+		columns.add(Pair.newInstance("# Nodes", (prev, curr) -> curr.getPlayers().stream()//
+				.map(Player::getGene)//
+				.map(Gene::getNodes)//
+				.mapToInt(List::size)//
+				.sum()));
+		columns.add(Pair.newInstance("Avg Nodes", (prev, curr) -> curr.getPlayers().stream()//
+				.map(Player::getGene)//
+				.map(Gene::getNodes)//
+				.mapToInt(List::size)//
+				.average().getAsDouble()));
 
-		columns.add(Pair.newInstance("# Conns x Player",
-				(prev, curr) -> curr.getPlayers().stream()//
-						.map(Player::getGene)//
-						.map(Gene::getConnections)//
-						.mapToInt(List::size)//
-						.sum()));
+		columns.add(Pair.newInstance("# Conns x Player", (prev, curr) -> curr.getPlayers().stream()//
+				.map(Player::getGene)//
+				.map(Gene::getConnections)//
+				.mapToInt(List::size)//
+				.sum()));
 
-		columns.add(Pair.newInstance("Avg Conns x Player",
-				(prev, curr) -> curr.getPlayers().stream()//
-						.map(Player::getGene)//
-						.map(Gene::getConnections)//
-						.mapToInt(List::size)//
-						.average().getAsDouble()));
+		columns.add(Pair.newInstance("Avg Conns x Player", (prev, curr) -> curr.getPlayers().stream()//
+				.map(Player::getGene)//
+				.map(Gene::getConnections)//
+				.mapToInt(List::size)//
+				.average().getAsDouble()));
 
-		columns.add(Pair.newInstance("# Active Conns x Player",
-				(prev, curr) -> curr.getPlayers().stream()//
-						.map(Player::getGene)//
-						.mapToLong(g -> g.getConnections().stream().filter(Connection::isEnabled).count())//
-						.count()));
+		columns.add(Pair.newInstance("# Active Conns x Player", (prev, curr) -> curr.getPlayers().stream()//
+				.map(Player::getGene)//
+				.mapToLong(g -> g.getConnections().stream().filter(Connection::isEnabled).count())//
+				.count()));
 
-		columns.add(Pair.newInstance("Avg Active Conns x Player",
-				(prev, curr) -> curr.getPlayers().stream()//
-						.map(Player::getGene)//
-						.mapToLong(g -> g.getConnections().stream().filter(Connection::isEnabled).count())//
-						.average().getAsDouble()));
+		columns.add(Pair.newInstance("Avg Active Conns x Player", (prev, curr) -> curr.getPlayers().stream()//
+				.map(Player::getGene)//
+				.mapToLong(g -> g.getConnections().stream().filter(Connection::isEnabled).count())//
+				.average().getAsDouble()));
 
 		columns.add(Pair.newInstance("Min Conn W", (prev, curr) -> getConnectionWeights(curr).min().getAsDouble()));
 		columns.add(Pair.newInstance("Max Conn W", (prev, curr) -> getConnectionWeights(curr).max().getAsDouble()));
@@ -130,7 +134,7 @@ public class GenerationEntry {
 		return columns;
 	}
 
-	private static DoubleStream getConnectionWeights(Generation generation) {
+	private DoubleStream getConnectionWeights(Generation generation) {
 
 		return generation.getPlayers().stream()//
 				.map(Player::getGene)//
@@ -138,28 +142,28 @@ public class GenerationEntry {
 				.mapToDouble(Connection::getWeight);
 	}
 
-	private static DoubleStream getDistanceStream(Generation generation) {
+	private DoubleStream getDistanceStream(Generation generation) {
 
-		return getOperationStream(generation, (g1, g2) -> generation.getCompatibilityDistance().getDistance(g1, g2));
+		return getOperationStream(generation, (g1, g2) -> compatibilityDistance.getDistance(g1, g2));
 	}
 
-	private static DoubleStream getMatchingGenes(Generation generation) {
+	private DoubleStream getMatchingGenes(Generation generation) {
 
-		return getOperationStream(generation, (g1, g2) -> (double) g1.getMatchingGenesCount(g2));
+		return getOperationStream(generation, (g1, g2) -> (double) geneService.getMatchingGenesCount(g1, g2));
 	}
 
-	private static DoubleStream getDisjointGenes(Generation generation) {
+	private DoubleStream getDisjointGenes(Generation generation) {
 
-		return getOperationStream(generation, (g1, g2) -> (double) g1.getDisjointGenesCount(g2));
+		return getOperationStream(generation, (g1, g2) -> (double) geneService.getDisjointGenesCount(g1, g2));
 	}
 
-	private static DoubleStream getAvgWeightDiff(Generation generation) {
+	private DoubleStream getAvgWeightDiff(Generation generation) {
 
-		return getOperationStream(generation,
-				(g1, g2) -> (double) g1.getAvgWeightDifference(g2, g1.getMatchingGenesCount(g2)));
+		return getOperationStream(generation, (g1,
+				g2) -> (double) geneService.getAvgWeightDifference(g1, g2, geneService.getMatchingGenesCount(g1, g2)));
 	}
 
-	private static DoubleStream getOperationStream(Generation generation, BiFunction<Gene, Gene, Double> function) {
+	private DoubleStream getOperationStream(Generation generation, BiFunction<Gene, Gene, Double> function) {
 
 		return generation.getPlayers().stream()//
 				.map(Player::getGene)//
@@ -167,5 +171,13 @@ public class GenerationEntry {
 						.map(Player::getGene)//
 						.filter(gene2 -> gene2.getId() != gene1.getId()) //
 						.mapToDouble(gene2 -> function.apply(gene1, gene2)));
+	}
+
+	public void setGeneService(GeneServiceImpl geneService) {
+		this.geneService = geneService;
+	}
+
+	public void setCompatibilityDistance(CompatibilityDistance compatibilityDistance) {
+		this.compatibilityDistance = compatibilityDistance;
 	}
 }

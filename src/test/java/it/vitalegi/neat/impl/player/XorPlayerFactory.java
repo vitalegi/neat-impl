@@ -1,11 +1,21 @@
 package it.vitalegi.neat.impl.player;
 
-import it.vitalegi.neat.impl.Gene;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import it.vitalegi.neat.impl.Gene;
+import it.vitalegi.neat.impl.feedforward.FeedForward;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
+
+@Service
 public class XorPlayerFactory implements PlayerFactory {
 
 	private int generation;
 	private double[] biases;
+	@Autowired
+	FeedForward feedForward;
+	@Autowired
+	GeneServiceImpl geneService;
 
 	public XorPlayerFactory(double[] biases) {
 		super();
@@ -14,12 +24,20 @@ public class XorPlayerFactory implements PlayerFactory {
 
 	@Override
 	public XorPlayer newPlayer(Gene gene) {
-		XorPlayer p = new XorPlayer(generation, biases);
+		XorPlayer p = new XorPlayer(feedForward, geneService, generation, biases);
 		p.setGene(gene);
 		return p;
 	}
 
 	public void setGeneration(int generation) {
 		this.generation = generation;
+	}
+
+	public void setFeedForward(FeedForward feedForward) {
+		this.feedForward = feedForward;
+	}
+
+	public void setGeneService(GeneServiceImpl geneService) {
+		this.geneService = geneService;
 	}
 }

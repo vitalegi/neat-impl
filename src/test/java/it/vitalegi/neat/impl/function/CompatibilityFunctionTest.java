@@ -9,14 +9,17 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import it.vitalegi.neat.AbstractTest;
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.Random;
 import it.vitalegi.neat.impl.UniqueId;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
+import it.vitalegi.neat.impl.util.ContextUtil;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
-public class CompatibilityFunctionTest {
+public class CompatibilityFunctionTest extends AbstractTest {
 
 	@BeforeClass
 	public static void initClass() {
@@ -28,6 +31,7 @@ public class CompatibilityFunctionTest {
 	@Before
 	public void init() {
 		uniqueId = new UniqueId();
+		init(ContextUtil.builder().inject());
 	}
 
 	@Test
@@ -40,22 +44,23 @@ public class CompatibilityFunctionTest {
 		final double W3 = 200.0;
 
 		CompatibilityDistanceImpl distanceImpl = new CompatibilityDistanceImpl(1, C1, C2);
+		distanceImpl.geneService = geneService;
 
-		Gene parent = Gene.newInstance(uniqueId);
+		Gene parent = geneService.newInstance(uniqueId);
 
-		parent.addConnection(1, 2, W11, true);
-		parent.addConnection(1, 3, W2, true);
-		parent.addConnection(1, 4, W2, true);
+		geneService.addConnection(parent, 1, 2, W11, true);
+		geneService.addConnection(parent, 1, 3, W2, true);
+		geneService.addConnection(parent, 1, 4, W2, true);
 
-		Gene gene1 = parent.clone();
-		gene1.addConnection(2, 3, 4.0, true);
-		gene1.addConnection(2, 4, 4.0, true);
+		Gene gene1 = geneService.clone(parent);
+		geneService.addConnection(gene1, 2, 3, 4.0, true);
+		geneService.addConnection(gene1, 2, 4, 4.0, true);
 
-		gene1.getConnection(1, 2).setWeight(W12);
+		geneService.getConnection(gene1, 1, 2).setWeight(W12);
 
-		Gene gene2 = parent.clone();
-		gene2.addConnection(2, 5, 4.0, true);
-		gene2.addConnection(2, 6, 4.0, true);
+		Gene gene2 = geneService.clone(parent);
+		geneService.addConnection(gene2, 2, 5, 4.0, true);
+		geneService.addConnection(gene2, 2, 6, 4.0, true);
 
 		double distance = distanceImpl.getDistance(gene1, gene2);
 

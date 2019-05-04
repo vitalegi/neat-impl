@@ -1,14 +1,24 @@
 package it.vitalegi.neat.impl.player;
 
-import it.vitalegi.neat.impl.Gene;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import it.vitalegi.neat.impl.Gene;
+import it.vitalegi.neat.impl.feedforward.FeedForward;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
+
+@Service
 public class DummyPlayerFactory implements PlayerFactory {
 
+	@Autowired
+	FeedForward feedForward;
+	@Autowired
+	GeneServiceImpl geneService;
 	private double fitness;
 
 	@Override
 	public Player newPlayer(Gene gene) {
-		DummyPlayer p = new DummyPlayer();
+		DummyPlayer p = new DummyPlayer(feedForward, geneService);
 		p.setGene(gene);
 		p.setFitness(fitness);
 		return p;

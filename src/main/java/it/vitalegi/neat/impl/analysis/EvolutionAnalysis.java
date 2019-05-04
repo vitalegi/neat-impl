@@ -6,28 +6,28 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.slf4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import it.vitalegi.neat.impl.Connection;
 import it.vitalegi.neat.impl.Generation;
 import it.vitalegi.neat.impl.player.Player;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
 import it.vitalegi.neat.impl.util.Pair;
 import it.vitalegi.neat.impl.util.StringUtil;
 import it.vitalegi.neat.impl.util.TablePrinter;
 
+@Service
 public class EvolutionAnalysis {
 
-	private List<Generation> generations;
+	@Autowired
+	GeneServiceImpl geneService;
 
-	public EvolutionAnalysis() {
-		generations = new ArrayList<>();
-	}
+	@Autowired
+	GenerationEntry generationEntry;
 
-	public void add(Generation entry) {
-		generations.add(entry);
-	}
-
-	public void logAnalysis(Logger log) {
-		List<Pair<String, Metric>> cols = GenerationEntry.getColumns();
+	public void logAnalysis(List<Generation> generations, Logger log) {
+		List<Pair<String, Metric>> cols = generationEntry.getColumns();
 
 		TablePrinter printer = TablePrinter.newPrinter();
 
@@ -56,9 +56,9 @@ public class EvolutionAnalysis {
 		printer.log(log);
 	}
 
-	public void getNetworks(double[] inputs, double[] biases, Logger log) {
+	public void getNetworks(List<Generation> generations, double[] inputs, double[] biases, Logger log) {
 		TablePrinter printer = TablePrinter.newPrinter();
-		printer.setHeaders(Arrays.asList("Gen", "Score", "Graphs", "Status (1-1)"));
+		printer.setHeaders(Arrays.asList("Gen", "Score", "Graphs"));
 
 		for (Generation gen : generations) {
 			for (int i = 0; i < gen.getPlayers().size(); i++) {
@@ -66,19 +66,19 @@ public class EvolutionAnalysis {
 				printer.addRow(Arrays.asList(//
 						String.valueOf(gen.getGenNumber()), //
 						StringUtil.format(p.getFitness()), //
-						p.getGene().stringify(true, false, false, //
-								Comparator.comparing(Connection::getFromNodeId).thenComparing(Connection::getToNodeId)), //
-						p.feedForwardEndStatus(inputs, biases)));
+						geneService.stringify(p.getGene(), true, false, false, //
+								Comparator.comparing(Connection::getFromNodeId).thenComparing(Connection::getToNodeId))//
+				));
 			}
 		}
 		printer.log(log);
 	}
 
-	public List<Generation> getGenerations() {
-		return generations;
+	public void setGeneService(GeneServiceImpl geneService) {
+		this.geneService = geneService;
 	}
 
-	public void setGenerations(List<Generation> generations) {
-		this.generations = generations;
+	public void setGenerationEntry(GenerationEntry generationEntry) {
+		this.generationEntry = generationEntry;
 	}
 }

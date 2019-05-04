@@ -7,10 +7,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import it.vitalegi.neat.AbstractTest;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("test")
-public class SigmoidFunctionTest {
+public class SigmoidFunctionTest  extends AbstractTest{
 
 	@Test
 	public void testSigmoid0() {

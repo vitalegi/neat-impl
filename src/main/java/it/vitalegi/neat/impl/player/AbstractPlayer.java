@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.feedforward.FeedForward;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
 
 public abstract class AbstractPlayer implements Player {
 
@@ -14,31 +15,30 @@ public abstract class AbstractPlayer implements Player {
 
 	protected Gene gene;
 
+	public AbstractPlayer(FeedForward feedForward, GeneServiceImpl geneService) {
+		this.feedForward = feedForward;
+		this.geneService = geneService;
+	}
+
+	FeedForward feedForward;
+	GeneServiceImpl geneService;
+
 	@Override
 	public double[] feedForward(double[] inputs, double[] biases) {
 
 		if (log.isDebugEnabled()) {
 			log.debug("Start Execute feedForward({},{}) with gene: {}", Arrays.toString(inputs),
-					Arrays.toString(biases), gene.stringify(true));
+					Arrays.toString(biases), getGeneService().stringify(gene, true));
 		}
-		FeedForward ff = gene.getFeedForward();
+		FeedForward ff = getFeedForward();
 		double[] fullInputs = ff.initInputs(inputs, biases);
-		double[] outputs = ff.feedForward(fullInputs);
+		double[] outputs = ff.feedForward(gene, fullInputs);
 
 		if (log.isDebugEnabled()) {
 			log.debug("End Execute feedForward({})={} with gene: {}", Arrays.toString(fullInputs),
-					Arrays.toString(outputs), gene.stringify(true));
+					Arrays.toString(outputs), getGeneService().stringify(gene, true));
 		}
 		return outputs;
-	}
-
-	@Override
-	public String feedForwardEndStatus(double[] inputs, double[] biases) {
-		FeedForward ff = gene.getFeedForward();
-		double[] fullInputs = ff.initInputs(inputs, biases);
-
-		ff.feedForward(fullInputs);
-		return ff.graphToString();
 	}
 
 	@Override
@@ -58,4 +58,11 @@ public abstract class AbstractPlayer implements Player {
 		this.gene = gene;
 	}
 
+	public FeedForward getFeedForward() {
+		return feedForward;
+	}
+
+	public GeneServiceImpl getGeneService() {
+		return geneService;
+	}
 }

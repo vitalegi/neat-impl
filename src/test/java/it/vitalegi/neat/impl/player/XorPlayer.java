@@ -5,6 +5,8 @@ import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import it.vitalegi.neat.impl.feedforward.FeedForward;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
 import it.vitalegi.neat.impl.util.StringUtil;
 
 public class XorPlayer extends AbstractPlayer {
@@ -18,8 +20,8 @@ public class XorPlayer extends AbstractPlayer {
 			{ XorPlayer.ONE, XorPlayer.ONE, XorPlayer.ZERO } //
 	};
 
-	public XorPlayer(int generation, double[] biases) {
-		super();
+	public XorPlayer(FeedForward feedForward, GeneServiceImpl geneService, int generation, double[] biases) {
+		super(feedForward, geneService);
 		this.generation = generation;
 		this.biases = biases;
 	}

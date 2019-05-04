@@ -1,8 +1,16 @@
 package it.vitalegi.neat.impl.function;
 
-import it.vitalegi.neat.impl.Gene;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import it.vitalegi.neat.impl.Gene;
+import it.vitalegi.neat.impl.service.GeneServiceImpl;
+
+@Service
 public class CompatibilityDistanceImpl implements CompatibilityDistance {
+
+	@Autowired
+	GeneServiceImpl geneService;
 
 	protected double c1;
 	protected double c2;
@@ -28,9 +36,9 @@ public class CompatibilityDistanceImpl implements CompatibilityDistance {
 
 	@Override
 	public double getDistance(Gene gene1, Gene gene2) {
-		int matchingGenes = gene1.getMatchingGenesCount(gene2);
-		int disjointGenes = gene1.getDisjointGenesCount(gene2);
-		double avgWeightDiff = gene1.getAvgWeightDifference(gene2, matchingGenes);
+		int matchingGenes = geneService.getMatchingGenesCount(gene1, gene2);
+		int disjointGenes = geneService.getDisjointGenesCount(gene1, gene2);
+		double avgWeightDiff = geneService.getAvgWeightDifference(gene1, gene2, matchingGenes);
 
 		int n = Math.max(gene1.getSize(), gene2.getSize());
 		return getDistance(n, disjointGenes, avgWeightDiff);
@@ -55,6 +63,18 @@ public class CompatibilityDistanceImpl implements CompatibilityDistance {
 
 	public void setC2(double c2) {
 		this.c2 = c2;
+	}
+
+	public double getDeltaT() {
+		return deltaT;
+	}
+
+	public void setDeltaT(double deltaT) {
+		this.deltaT = deltaT;
+	}
+
+	public void setGeneService(GeneServiceImpl geneService) {
+		this.geneService = geneService;
 	}
 
 }
