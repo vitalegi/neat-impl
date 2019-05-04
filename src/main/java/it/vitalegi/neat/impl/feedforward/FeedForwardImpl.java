@@ -23,23 +23,10 @@ import it.vitalegi.neat.impl.service.GeneServiceImpl;
 @Service
 public class FeedForwardImpl implements FeedForward {
 
-	Logger log = LoggerFactory.getLogger(FeedForwardImpl.class);
-
 	@Autowired
 	GeneServiceImpl geneService;
 
-	@Override
-	public double[] initInputs(double[] inputs, double[] biases) {
-
-		double[] fullInputs = new double[inputs.length + biases.length];
-		for (int i = 0; i < inputs.length; i++) {
-			fullInputs[i] = inputs[i];
-		}
-		for (int i = 0; i < biases.length; i++) {
-			fullInputs[inputs.length + i] = biases[i];
-		}
-		return fullInputs;
-	}
+	Logger log = LoggerFactory.getLogger(FeedForwardImpl.class);
 
 	@Override
 	public double[] feedForward(Gene gene, double[] inputs) {
@@ -113,35 +100,6 @@ public class FeedForwardImpl implements FeedForward {
 		return nodes;
 	}
 
-	protected boolean isSuccessor(Map<Long, GraphNode> graph, List<Long> pendingNodes, GraphNode node) {
-		for (int j = 0; j < pendingNodes.size(); j++) {
-			GraphNode possiblePredecessor = graph.get(pendingNodes.get(j));
-			if (possiblePredecessor.isPredecessor(node.getId())) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	private void loopDetected(Gene gene, List<Long> pendingNodes) {
-		if (log.isErrorEnabled()) {
-
-			log.error("Individuato un loop tra i nodi {}.",
-					pendingNodes.stream().map(String::valueOf).collect(Collectors.joining(", ")));
-			log.error("GENE: {}", geneService.stringify(gene, false));
-
-			StringBuilder sb = new StringBuilder();
-			gene.getConnections().stream()//
-					.sorted( //
-							Comparator.comparing(Connection::getFromNodeId).thenComparing(Connection::getFromNodeId)//
-					).forEach(c -> {
-						log.error("{}\t{}\t{}", c.getFromNode().getId(), c.getToNode().getId(), c.isEnabled());
-					});
-			log.error("RECAP GRAFO. {}", sb);
-		}
-		throw new RuntimeException("Loop detected.");
-	}
-
 	public String graphToString(Gene gene, Map<Long, GraphNode> graph) {
 		StringBuilder sb = new StringBuilder();
 		List<Long> nodeIds = getNodesInFeedingOrder(gene, graph);
@@ -194,6 +152,48 @@ public class FeedForwardImpl implements FeedForward {
 			GraphNode node = graph.get(nodeId);
 			node.setInputsSum(nodeWeight);
 		}
+	}
+
+	@Override
+	public double[] initInputs(double[] inputs, double[] biases) {
+
+		double[] fullInputs = new double[inputs.length + biases.length];
+		for (int i = 0; i < inputs.length; i++) {
+			fullInputs[i] = inputs[i];
+		}
+		for (int i = 0; i < biases.length; i++) {
+			fullInputs[inputs.length + i] = biases[i];
+		}
+		return fullInputs;
+	}
+
+	protected boolean isSuccessor(Map<Long, GraphNode> graph, List<Long> pendingNodes, GraphNode node) {
+		for (int j = 0; j < pendingNodes.size(); j++) {
+			GraphNode possiblePredecessor = graph.get(pendingNodes.get(j));
+			if (possiblePredecessor.isPredecessor(node.getId())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private void loopDetected(Gene gene, List<Long> pendingNodes) {
+		if (log.isErrorEnabled()) {
+
+			log.error("Individuato un loop tra i nodi {}.",
+					pendingNodes.stream().map(String::valueOf).collect(Collectors.joining(", ")));
+			log.error("GENE: {}", geneService.stringify(gene, false));
+
+			StringBuilder sb = new StringBuilder();
+			gene.getConnections().stream()//
+					.sorted( //
+							Comparator.comparing(Connection::getFromNodeId).thenComparing(Connection::getFromNodeId)//
+					).forEach(c -> {
+						log.error("{}\t{}\t{}", c.getFromNode().getId(), c.getToNode().getId(), c.isEnabled());
+					});
+			log.error("RECAP GRAFO. {}", sb);
+		}
+		throw new RuntimeException("Loop detected.");
 	}
 
 	public void setGeneService(GeneServiceImpl geneService) {

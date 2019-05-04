@@ -9,12 +9,12 @@ import it.vitalegi.neat.impl.service.GeneServiceImpl;
 @Service
 public class CompatibilityDistanceImpl implements CompatibilityDistance {
 
-	@Autowired
-	GeneServiceImpl geneService;
-
 	protected double c1;
+
 	protected double c2;
 	protected double deltaT;
+	@Autowired
+	GeneServiceImpl geneService;
 
 	public CompatibilityDistanceImpl() {
 		super();
@@ -32,6 +32,10 @@ public class CompatibilityDistanceImpl implements CompatibilityDistance {
 
 	public double getC2() {
 		return c2;
+	}
+
+	public double getDeltaT() {
+		return deltaT;
 	}
 
 	@Override
@@ -63,10 +67,6 @@ public class CompatibilityDistanceImpl implements CompatibilityDistance {
 
 	public void setC2(double c2) {
 		this.c2 = c2;
-	}
-
-	public double getDeltaT() {
-		return deltaT;
 	}
 
 	public void setDeltaT(double deltaT) {

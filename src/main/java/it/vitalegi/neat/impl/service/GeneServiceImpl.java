@@ -25,61 +25,6 @@ import it.vitalegi.neat.impl.util.StringUtil;
 public class GeneServiceImpl {
 	private static Logger log = LoggerFactory.getLogger(GeneServiceImpl.class);
 
-	public Gene newInstance(UniqueId uniqueId) {
-		return newInstance(uniqueId, uniqueId.nextGeneId(), 0, 0, 0);
-	}
-
-	public Gene newInstance(UniqueId uniqueId, int inputs, int outputs) {
-		return newInstance(uniqueId, uniqueId.nextGeneId(), inputs, outputs, 0);
-	}
-
-	public Gene newInstance(UniqueId uniqueId, long id, int inputs, int outputs, int biases) {
-		long[] inputIds = new long[inputs];
-		long[] outputIds = new long[outputs];
-		long[] biasIds = new long[biases];
-		for (int i = 0; i < inputIds.length; i++) {
-			inputIds[i] = uniqueId.nextNodeId();
-		}
-		for (int i = 0; i < outputIds.length; i++) {
-			outputIds[i] = uniqueId.nextNodeId();
-		}
-		for (int i = 0; i < biasIds.length; i++) {
-			biasIds[i] = uniqueId.nextNodeId();
-		}
-		return newInstance(uniqueId, id, inputIds, outputIds, biasIds);
-	}
-
-	public Gene newInstance(UniqueId uniqueId, long id, long[] inputIds, long[] outputIds, long[] biasIds) {
-		Gene gene = new Gene(uniqueId, id);
-
-		gene.setInputs(inputIds.length);
-		gene.setOutputs(outputIds.length);
-
-		for (int i = 0; i < inputIds.length; i++) {
-			addNode(gene, Node.newInputInstance(uniqueId, inputIds[i]));
-		}
-		for (int i = 0; i < outputIds.length; i++) {
-			addNode(gene, Node.newOutputInstance(uniqueId, outputIds[i]));
-		}
-		for (int i = 0; i < biasIds.length; i++) {
-			addNode(gene, Node.newInstance(uniqueId, biasIds[i]));
-		}
-		return gene;
-	}
-
-	public Gene clone(Gene gene) {
-		return copy(gene, new Gene(gene.getUniqueId(), gene.getId()));
-	}
-
-	public Gene copy(Gene source, Gene target) {
-		target.setInputs(source.getInputs());
-		target.setOutputs(source.getOutputs());
-		source.getNodes().forEach(n -> addNode(target, n));
-		source.getConnections().forEach(c -> addConnection(target, c.getId(), c.getFromNode().getId(),
-				c.getToNode().getId(), c.getWeight(), c.isEnabled()));
-		return target;
-	}
-
 	protected Connection addConnection(Gene gene, Connection connection) {
 		return addConnection(gene, connection.getId(), connection.getFromNode().getId(), connection.getToNode().getId(),
 				connection.getWeight(), connection.isEnabled());
@@ -130,6 +75,37 @@ public class GeneServiceImpl {
 			getConnectionsFromNode(gene, c.getToNode()).forEach(stack::push);
 		}
 		return false;
+	}
+
+	public Gene clone(Gene gene) {
+		return copy(gene, new Gene(gene.getUniqueId(), gene.getId()));
+	}
+
+	public Gene copy(Gene source, Gene target) {
+		target.setInputs(source.getInputs());
+		target.setOutputs(source.getOutputs());
+		source.getNodes().forEach(n -> addNode(target, n));
+		source.getConnections().forEach(c -> addConnection(target, c.getId(), c.getFromNode().getId(),
+				c.getToNode().getId(), c.getWeight(), c.isEnabled()));
+		return target;
+	}
+
+	protected void deleteConnectionById(Gene gene, long id) {
+		for (int i = 0; i < gene.getConnections().size(); i++) {
+			if (gene.getConnections().get(i).getId() == id) {
+				gene.getConnections().remove(i);
+				return;
+			}
+		}
+	}
+
+	protected void deleteNodeById(Gene gene, long id) {
+		for (int i = 0; i < gene.getNodes().size(); i++) {
+			if (gene.getNodes().get(i).getId() == id) {
+				gene.getNodes().remove(i);
+				return;
+			}
+		}
 	}
 
 	public double getAvgWeightDifference(Gene gene1, Gene gene2, int size) {
@@ -232,12 +208,12 @@ public class GeneServiceImpl {
 		return acceptableNodes.get(Random.nextInt(acceptableNodes.size()));
 	}
 
-	public List<Long> getSortedInputNodes(Gene gene) {
-		return getSortedNodes(gene, Node::isInput);
-	}
-
 	public List<Long> getSortedBiasNodes(Gene gene) {
 		return getSortedNodes(gene, Node::isBias);
+	}
+
+	public List<Long> getSortedInputNodes(Gene gene) {
+		return getSortedNodes(gene, Node::isInput);
 	}
 
 	private List<Long> getSortedNodes(Gene gene, Predicate<Node> condition) {
@@ -339,6 +315,21 @@ public class GeneServiceImpl {
 		return gene;
 	}
 
+	protected Gene mutateChangeRandomEnableConnection(Gene gene) {
+		if (gene.getConnections().isEmpty()) {
+			if (log.isDebugEnabled()) {
+				log.debug("Skip change enable node in gene {}: no existing connections", gene.getId());
+			}
+			return gene;
+		}
+		Connection randomConnection = gene.getConnections().get(Random.nextInt(gene.getConnections().size()));
+		if (log.isDebugEnabled()) {
+			log.debug("Change enable of node {}. Old value: " + randomConnection.isEnabled());
+		}
+		randomConnection.setEnabled(!randomConnection.isEnabled());
+		return gene;
+	}
+
 	protected Gene mutateRemoveRandomNode(Gene gene) {
 		Node hiddenNode = getRandomNode(gene, false, false);
 		if (hiddenNode == null) {
@@ -361,21 +352,6 @@ public class GeneServiceImpl {
 		return gene;
 	}
 
-	protected Gene mutateChangeRandomEnableConnection(Gene gene) {
-		if (gene.getConnections().isEmpty()) {
-			if (log.isDebugEnabled()) {
-				log.debug("Skip change enable node in gene {}: no existing connections", gene.getId());
-			}
-			return gene;
-		}
-		Connection randomConnection = gene.getConnections().get(Random.nextInt(gene.getConnections().size()));
-		if (log.isDebugEnabled()) {
-			log.debug("Change enable of node {}. Old value: " + randomConnection.isEnabled());
-		}
-		randomConnection.setEnabled(!randomConnection.isEnabled());
-		return gene;
-	}
-
 	protected Gene mutateWeights(Gene gene) {
 		double mutateProbability = 0.8;
 		double uniformPerturbationProbability = 0.9;
@@ -393,22 +369,46 @@ public class GeneServiceImpl {
 		return gene;
 	}
 
-	protected void deleteConnectionById(Gene gene, long id) {
-		for (int i = 0; i < gene.getConnections().size(); i++) {
-			if (gene.getConnections().get(i).getId() == id) {
-				gene.getConnections().remove(i);
-				return;
-			}
-		}
+	public Gene newInstance(UniqueId uniqueId) {
+		return newInstance(uniqueId, uniqueId.nextGeneId(), 0, 0, 0);
 	}
 
-	protected void deleteNodeById(Gene gene, long id) {
-		for (int i = 0; i < gene.getNodes().size(); i++) {
-			if (gene.getNodes().get(i).getId() == id) {
-				gene.getNodes().remove(i);
-				return;
-			}
+	public Gene newInstance(UniqueId uniqueId, int inputs, int outputs) {
+		return newInstance(uniqueId, uniqueId.nextGeneId(), inputs, outputs, 0);
+	}
+
+	public Gene newInstance(UniqueId uniqueId, long id, int inputs, int outputs, int biases) {
+		long[] inputIds = new long[inputs];
+		long[] outputIds = new long[outputs];
+		long[] biasIds = new long[biases];
+		for (int i = 0; i < inputIds.length; i++) {
+			inputIds[i] = uniqueId.nextNodeId();
 		}
+		for (int i = 0; i < outputIds.length; i++) {
+			outputIds[i] = uniqueId.nextNodeId();
+		}
+		for (int i = 0; i < biasIds.length; i++) {
+			biasIds[i] = uniqueId.nextNodeId();
+		}
+		return newInstance(uniqueId, id, inputIds, outputIds, biasIds);
+	}
+
+	public Gene newInstance(UniqueId uniqueId, long id, long[] inputIds, long[] outputIds, long[] biasIds) {
+		Gene gene = new Gene(uniqueId, id);
+
+		gene.setInputs(inputIds.length);
+		gene.setOutputs(outputIds.length);
+
+		for (int i = 0; i < inputIds.length; i++) {
+			addNode(gene, Node.newInputInstance(uniqueId, inputIds[i]));
+		}
+		for (int i = 0; i < outputIds.length; i++) {
+			addNode(gene, Node.newOutputInstance(uniqueId, outputIds[i]));
+		}
+		for (int i = 0; i < biasIds.length; i++) {
+			addNode(gene, Node.newInstance(uniqueId, biasIds[i]));
+		}
+		return gene;
 	}
 
 	public Gene offspring(Gene gene1, Gene gene2) {

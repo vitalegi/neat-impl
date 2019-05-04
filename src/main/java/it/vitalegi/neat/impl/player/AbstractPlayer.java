@@ -13,15 +13,15 @@ public abstract class AbstractPlayer implements Player {
 
 	private static Logger log = LoggerFactory.getLogger(AbstractPlayer.class);
 
+	FeedForward feedForward;
+
 	protected Gene gene;
 
+	GeneServiceImpl geneService;
 	public AbstractPlayer(FeedForward feedForward, GeneServiceImpl geneService) {
 		this.feedForward = feedForward;
 		this.geneService = geneService;
 	}
-
-	FeedForward feedForward;
-	GeneServiceImpl geneService;
 
 	@Override
 	public double[] feedForward(double[] inputs, double[] biases) {
@@ -41,6 +41,10 @@ public abstract class AbstractPlayer implements Player {
 		return outputs;
 	}
 
+	public FeedForward getFeedForward() {
+		return feedForward;
+	}
+
 	@Override
 	public abstract double getFitness();
 
@@ -54,15 +58,11 @@ public abstract class AbstractPlayer implements Player {
 		return gene.getId();
 	}
 
-	public void setGene(Gene gene) {
-		this.gene = gene;
-	}
-
-	public FeedForward getFeedForward() {
-		return feedForward;
-	}
-
 	public GeneServiceImpl getGeneService() {
 		return geneService;
+	}
+
+	public void setGene(Gene gene) {
+		this.gene = gene;
 	}
 }

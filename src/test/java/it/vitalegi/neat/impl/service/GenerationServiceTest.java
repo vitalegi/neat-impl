@@ -11,7 +11,12 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.anyDouble;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,8 +29,8 @@ import it.vitalegi.neat.impl.Generation;
 import it.vitalegi.neat.impl.Random;
 import it.vitalegi.neat.impl.Species;
 import it.vitalegi.neat.impl.UniqueId;
-import it.vitalegi.neat.impl.feedforward.FeedForward;
 import it.vitalegi.neat.impl.function.CompatibilityDistance;
+import it.vitalegi.neat.impl.function.CompatibilityDistanceImpl;
 import it.vitalegi.neat.impl.player.DummyPlayer;
 import it.vitalegi.neat.impl.player.DummyPlayerFactory;
 import it.vitalegi.neat.impl.player.Player;
@@ -87,7 +92,7 @@ public class GenerationServiceTest extends AbstractTest {
 
 	@Test
 	public void testGetCompatibleSpeciesIf1CompatibleSpecies() {
-		CompatibilityDistance cd = Mockito.mock(CompatibilityDistance.class);
+		CompatibilityDistance cd = mock(CompatibilityDistance.class);
 
 		init(ContextUtil.builder().compatibilityDistance(cd).inject());
 
@@ -96,8 +101,8 @@ public class GenerationServiceTest extends AbstractTest {
 		Gene gene2 = geneService.newInstance(generation.getUniqueId());
 		Player player2 = playerFactory.newPlayer(gene2);
 
-		Mockito.when(cd.isCompatible(gene1, gene2)).thenReturn(true);
-		Mockito.when(cd.isCompatible(gene2, gene1)).thenReturn(true);
+		when(cd.isCompatible(gene1, gene2)).thenReturn(true);
+		when(cd.isCompatible(gene2, gene1)).thenReturn(true);
 
 		Species species1 = speciesService.newInstance(1, 0);
 		generationService.addSpecies(generation, species1);
@@ -109,7 +114,7 @@ public class GenerationServiceTest extends AbstractTest {
 
 	@Test
 	public void testGetCompatibleSpeciesIf2CompatibleSpecies() {
-		CompatibilityDistance cd = Mockito.mock(CompatibilityDistance.class);
+		CompatibilityDistance cd = mock(CompatibilityDistance.class);
 
 		init(ContextUtil.builder().compatibilityDistance(cd).inject());
 
@@ -120,12 +125,12 @@ public class GenerationServiceTest extends AbstractTest {
 		Gene gene3 = geneService.newInstance(generation.getUniqueId());
 		Player player3 = playerFactory.newPlayer(gene3);
 
-		Mockito.when(cd.isCompatible(gene1, gene2)).thenReturn(false);
-		Mockito.when(cd.isCompatible(gene2, gene1)).thenReturn(false);
-		Mockito.when(cd.isCompatible(gene1, gene3)).thenReturn(true);
-		Mockito.when(cd.isCompatible(gene3, gene1)).thenReturn(true);
-		Mockito.when(cd.isCompatible(gene2, gene3)).thenReturn(true);
-		Mockito.when(cd.isCompatible(gene3, gene2)).thenReturn(true);
+		when(cd.isCompatible(gene1, gene2)).thenReturn(false);
+		when(cd.isCompatible(gene2, gene1)).thenReturn(false);
+		when(cd.isCompatible(gene1, gene3)).thenReturn(true);
+		when(cd.isCompatible(gene3, gene1)).thenReturn(true);
+		when(cd.isCompatible(gene2, gene3)).thenReturn(true);
+		when(cd.isCompatible(gene3, gene2)).thenReturn(true);
 
 		Species species1 = speciesService.newInstance(1, 0);
 		generationService.addSpecies(generation, species1);
@@ -140,7 +145,7 @@ public class GenerationServiceTest extends AbstractTest {
 
 	@Test
 	public void testGetCompatibleSpeciesIfNoCompatibleSpecies() {
-		CompatibilityDistance cd = Mockito.mock(CompatibilityDistance.class);
+		CompatibilityDistance cd = mock(CompatibilityDistance.class);
 
 		init(ContextUtil.builder().compatibilityDistance(cd).inject());
 
@@ -149,8 +154,8 @@ public class GenerationServiceTest extends AbstractTest {
 		Gene gene2 = geneService.newInstance(generation.getUniqueId());
 		Player player2 = playerFactory.newPlayer(gene2);
 
-		Mockito.when(cd.isCompatible(gene1, gene2)).thenReturn(false);
-		Mockito.when(cd.isCompatible(gene2, gene1)).thenReturn(false);
+		when(cd.isCompatible(gene1, gene2)).thenReturn(false);
+		when(cd.isCompatible(gene2, gene1)).thenReturn(false);
 		Species species1 = speciesService.newInstance(1, 0);
 		generationService.addSpecies(generation, species1);
 		generationService.addPlayer(generation, player1, species1);
@@ -265,29 +270,30 @@ public class GenerationServiceTest extends AbstractTest {
 
 	@Test
 	public void testPreserveSpeciesShouldCopyChampionIfRelevantSpecies() {
-		// TODO restore test
-		/*
-		 * CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
-		 *
-		 * Generation targetGen = new Generation(new UniqueId(), playerFactory, 1);
-		 *
-		 * Gene gene = Mockito.mock(Gene.class);
-		 *
-		 * SpeciesServiceImpl speciesServiceMock = new SpeciesServiceImpl() {
-		 *
-		 * @Override public boolean isRelevantSpecies(Species s) { return true; } };
-		 * generationService.speciesService = speciesServiceMock;
-		 *
-		 * Species oldSpecies = new Species(1, 0);
-		 *
-		 * generationService.preserveSpecies(targetGen, oldSpecies, gene);
-		 *
-		 * Mockito.verify(gene,
-		 * Mockito.times(0)).mutate(Generation.MUTATE_ADD_NODE_PROBABILITY,
-		 * Generation.MUTATE_REMOVE_NODE_PROBABILITY,
-		 * Generation.MUTATE_CONNECTION_PROBABILITY,
-		 * Generation.MUTATE_ENABLE_PROBABILITY);
-		 */
+
+		GeneServiceImpl gs = mock(GeneServiceImpl.class);
+
+		init(ContextUtil.builder()//
+				.compatibilityDistance(new CompatibilityDistanceImpl(0.1, 1, 2))//
+				.speciesService(new SpeciesServiceImpl() {
+					@Override
+					public boolean isRelevantSpecies(Species s) {
+						return true;
+					}
+				})//
+				.geneService(gs)//
+				.inject());
+
+		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1);
+
+		Gene gene = new Gene(targetGen.getUniqueId(), targetGen.getUniqueId().nextGeneId());
+
+		Species oldSpecies = new Species(1, 0);
+
+		generationService.preserveSpecies(targetGen, oldSpecies, gene);
+
+		verify(geneService, times(0))//
+				.mutate(any(Gene.class), anyDouble(), anyDouble(), anyDouble(), anyDouble());
 	}
 
 	@Test
@@ -311,34 +317,35 @@ public class GenerationServiceTest extends AbstractTest {
 
 	@Test
 	public void testPreserveSpeciesShouldMutateChampionIfIrrelevantSpecies() {
-		// TODO restore test
-		/*
-		 * CompatibilityDistance cd = new CompatibilityDistanceImpl(0.1, 1, 2);
-		 *
-		 * GenerationServiceImpl generationServiceMock = new GenerationServiceImpl() {
-		 *
-		 * @Override protected boolean isTopScoreSpecies(Generation gen, Species
-		 * species) { return false; }
-		 *
-		 * }; Generation targetGen = new Generation(new UniqueId(), playerFactory, 1);
-		 *
-		 * Gene gene = Mockito.mock(Gene.class);
-		 *
-		 * SpeciesServiceImpl speciesServiceMock = new SpeciesServiceImpl() {
-		 *
-		 * @Override public boolean isRelevantSpecies(Species s) { return false; } };
-		 * generationServiceMock.speciesService = speciesServiceMock;
-		 *
-		 * Species oldSpecies = new Species(1, 0);
-		 *
-		 * Mockito.when(gene.clone()).thenReturn(gene);
-		 *
-		 * generationServiceMock.preserveSpecies(targetGen, oldSpecies, gene);
-		 * Mockito.verify(gene,
-		 * Mockito.times(1)).mutate(Generation.MUTATE_ADD_NODE_PROBABILITY,
-		 * Generation.MUTATE_REMOVE_NODE_PROBABILITY,
-		 * Generation.MUTATE_CONNECTION_PROBABILITY,
-		 * Generation.MUTATE_ENABLE_PROBABILITY);
-		 */
+		GeneServiceImpl gs = mock(GeneServiceImpl.class);
+
+		init(ContextUtil.builder()//
+				.compatibilityDistance(new CompatibilityDistanceImpl(0.1, 1, 2))//
+				.speciesService(new SpeciesServiceImpl() {
+					@Override
+					public boolean isRelevantSpecies(Species s) {
+						return false;
+					}
+				})//
+				.generationService(new GenerationServiceImpl() {
+					@Override
+					protected boolean isTopScoreSpecies(Generation gen, Species species) {
+						return false;
+					}
+				}).geneService(gs)//
+				.inject());
+
+		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1);
+
+		Gene gene = new Gene(targetGen.getUniqueId(), targetGen.getUniqueId().nextGeneId());
+
+		Species oldSpecies = new Species(1, 0);
+
+		when(gs.clone(gene)).thenReturn(gene);
+
+		generationService.preserveSpecies(targetGen, oldSpecies, gene);
+
+		verify(geneService, times(1))//
+				.mutate(any(Gene.class), anyDouble(), anyDouble(), anyDouble(), anyDouble());
 	}
 }

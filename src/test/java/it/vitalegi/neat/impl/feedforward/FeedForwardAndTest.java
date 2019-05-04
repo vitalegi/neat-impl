@@ -15,7 +15,6 @@ import it.vitalegi.neat.AbstractTest;
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.Random;
 import it.vitalegi.neat.impl.UniqueId;
-import it.vitalegi.neat.impl.service.GeneServiceImpl;
 import it.vitalegi.neat.impl.util.ContextUtil;
 
 @RunWith(SpringRunner.class)

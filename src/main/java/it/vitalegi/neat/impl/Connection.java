@@ -37,16 +37,16 @@ public class Connection {
 		return fromNode.getId();
 	}
 
-	public long getToNodeId() {
-		return toNode.getId();
-	}
-
 	public long getId() {
 		return id;
 	}
 
 	public Node getToNode() {
 		return toNode;
+	}
+
+	public long getToNodeId() {
+		return toNode.getId();
 	}
 
 	public double getWeight() {

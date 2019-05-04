@@ -17,12 +17,12 @@ public class Generation {
 	public static final double MIN_GROWTH_RATIO = 1.05;
 	// dimensione minima per considerare rilevante una specie
 	public static final int MIN_SPECIES_SIZE_TO_BE_RELEVANT = 5;
+	// probabilita' di aggiungere un nodo
+	public static final double MUTATE_ADD_NODE_PROBABILITY = 0.15;
 	// probabilita' di aggiungere una connessione
 	public static final double MUTATE_CONNECTION_PROBABILITY = 0.20;
 	// probabilita' di abilitare/disabilitare una connessione
 	public static final double MUTATE_ENABLE_PROBABILITY = 0.05;
-	// probabilita' di aggiungere un nodo
-	public static final double MUTATE_ADD_NODE_PROBABILITY = 0.15;
 	// probability to remove a node
 	public static final double MUTATE_REMOVE_NODE_PROBABILITY = 0;
 	// percentuale di geni da eliminare ad ogni nuova generazione
@@ -46,6 +46,10 @@ public class Generation {
 		species = new ArrayList<>();
 	}
 
+	public PlayerFactory getFactory() {
+		return factory;
+	}
+
 	public int getGenNumber() {
 		return genNumber;
 	}
@@ -62,16 +66,12 @@ public class Generation {
 		return uniqueId;
 	}
 
-	public void setGenNumber(int genNumber) {
-		this.genNumber = genNumber;
-	}
-
-	public PlayerFactory getFactory() {
-		return factory;
-	}
-
 	public void setFactory(PlayerFactory factory) {
 		this.factory = factory;
+	}
+
+	public void setGenNumber(int genNumber) {
+		this.genNumber = genNumber;
 	}
 
 	public void setPlayers(List<Player> players) {

@@ -16,13 +16,9 @@ import it.vitalegi.neat.impl.player.Player;
 
 @Service
 public class SpeciesServiceImpl {
-	Logger log = LoggerFactory.getLogger(SpeciesServiceImpl.class);
 	@Autowired
 	CompatibilityDistance compatibilityDistance;
-
-	public Species newInstance(long id, int startGeneration) {
-		return new Species(id, startGeneration);
-	}
+	Logger log = LoggerFactory.getLogger(SpeciesServiceImpl.class);
 
 	public List<Player> getBestPlayers(Species species, int size) {
 		if (log.isDebugEnabled()) {
@@ -68,6 +64,10 @@ public class SpeciesServiceImpl {
 
 	public boolean isRelevantSpecies(Species species) {
 		return species.getPlayers().size() >= Generation.MIN_SPECIES_SIZE_TO_BE_RELEVANT;
+	}
+
+	public Species newInstance(long id, int startGeneration) {
+		return new Species(id, startGeneration);
 	}
 
 	public void setCompatibilityDistance(CompatibilityDistance compatibilityDistance) {

@@ -2,6 +2,10 @@ package it.vitalegi.neat.impl;
 
 public class Node {
 
+	public static Node newBiasInstance(UniqueId uniqueId, long id) {
+		return new Node(uniqueId, id, false, false, true);
+	}
+
 	public static Node newInputInstance(UniqueId uniqueId, long id) {
 
 		return new Node(uniqueId, id, true, false, false);
@@ -16,14 +20,10 @@ public class Node {
 		return new Node(uniqueId, id, false, true, false);
 	}
 
-	public static Node newBiasInstance(UniqueId uniqueId, long id) {
-		return new Node(uniqueId, id, false, false, true);
-	}
-
+	private boolean bias;
 	private long id;
 	private boolean input;
 	private boolean output;
-	private boolean bias;
 
 	public Node() {
 		super();
@@ -41,12 +41,20 @@ public class Node {
 		return id;
 	}
 
+	public boolean isBias() {
+		return bias;
+	}
+
 	public boolean isInput() {
 		return input;
 	}
 
 	public boolean isOutput() {
 		return output;
+	}
+
+	public void setBias(boolean bias) {
+		this.bias = bias;
 	}
 
 	public void setId(long id) {
@@ -59,14 +67,6 @@ public class Node {
 
 	public void setOutput(boolean output) {
 		this.output = output;
-	}
-
-	public boolean isBias() {
-		return bias;
-	}
-
-	public void setBias(boolean bias) {
-		this.bias = bias;
 	}
 
 	@Override

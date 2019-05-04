@@ -8,14 +8,14 @@ public class DummyPlayer extends AbstractPlayer {
 
 	protected double fitness;
 
+	public DummyPlayer(FeedForward feedForward, GeneServiceImpl geneService) {
+		this(feedForward, geneService, null, 0);
+	}
+
 	public DummyPlayer(FeedForward feedForward, GeneServiceImpl geneService, Gene gene, double fitness) {
 		super(feedForward, geneService);
 		this.gene = gene;
 		this.fitness = fitness;
-	}
-
-	public DummyPlayer(FeedForward feedForward, GeneServiceImpl geneService) {
-		this(feedForward, geneService, null, 0);
 	}
 
 	@Override

@@ -10,10 +10,10 @@ import it.vitalegi.neat.impl.service.GeneServiceImpl;
 @Service
 public class XorPlayerFactory implements PlayerFactory {
 
-	private int generation;
 	private double[] biases;
 	@Autowired
 	FeedForward feedForward;
+	private int generation;
 	@Autowired
 	GeneServiceImpl geneService;
 
@@ -29,12 +29,12 @@ public class XorPlayerFactory implements PlayerFactory {
 		return p;
 	}
 
-	public void setGeneration(int generation) {
-		this.generation = generation;
-	}
-
 	public void setFeedForward(FeedForward feedForward) {
 		this.feedForward = feedForward;
+	}
+
+	public void setGeneration(int generation) {
+		this.generation = generation;
 	}
 
 	public void setGeneService(GeneServiceImpl geneService) {

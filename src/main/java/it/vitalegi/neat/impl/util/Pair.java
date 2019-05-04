@@ -2,12 +2,12 @@ package it.vitalegi.neat.impl.util;
 
 public class Pair<E, T> {
 
-	private E first;
-	private T second;
-
 	public static <E, T> Pair<E, T> newInstance(E first, T second) {
 		return new Pair<>(first, second);
 	}
+	private E first;
+
+	private T second;
 
 	public Pair(E first, T second) {
 		super();

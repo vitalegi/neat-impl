@@ -21,10 +21,28 @@ import it.vitalegi.neat.impl.util.TablePrinter;
 public class EvolutionAnalysis {
 
 	@Autowired
-	GeneServiceImpl geneService;
+	GenerationEntry generationEntry;
 
 	@Autowired
-	GenerationEntry generationEntry;
+	GeneServiceImpl geneService;
+
+	public void getNetworks(List<Generation> generations, double[] inputs, double[] biases, Logger log) {
+		TablePrinter printer = TablePrinter.newPrinter();
+		printer.setHeaders(Arrays.asList("Gen", "Score", "Graphs"));
+
+		for (Generation gen : generations) {
+			for (int i = 0; i < gen.getPlayers().size(); i++) {
+				Player p = gen.getPlayers().get(i);
+				printer.addRow(Arrays.asList(//
+						String.valueOf(gen.getGenNumber()), //
+						StringUtil.format(p.getFitness()), //
+						geneService.stringify(p.getGene(), true, false, false, //
+								Comparator.comparing(Connection::getFromNodeId).thenComparing(Connection::getToNodeId))//
+				));
+			}
+		}
+		printer.log(log);
+	}
 
 	public void logAnalysis(List<Generation> generations, Logger log) {
 		List<Pair<String, Metric>> cols = generationEntry.getColumns();
@@ -56,29 +74,11 @@ public class EvolutionAnalysis {
 		printer.log(log);
 	}
 
-	public void getNetworks(List<Generation> generations, double[] inputs, double[] biases, Logger log) {
-		TablePrinter printer = TablePrinter.newPrinter();
-		printer.setHeaders(Arrays.asList("Gen", "Score", "Graphs"));
-
-		for (Generation gen : generations) {
-			for (int i = 0; i < gen.getPlayers().size(); i++) {
-				Player p = gen.getPlayers().get(i);
-				printer.addRow(Arrays.asList(//
-						String.valueOf(gen.getGenNumber()), //
-						StringUtil.format(p.getFitness()), //
-						geneService.stringify(p.getGene(), true, false, false, //
-								Comparator.comparing(Connection::getFromNodeId).thenComparing(Connection::getToNodeId))//
-				));
-			}
-		}
-		printer.log(log);
+	public void setGenerationEntry(GenerationEntry generationEntry) {
+		this.generationEntry = generationEntry;
 	}
 
 	public void setGeneService(GeneServiceImpl geneService) {
 		this.geneService = geneService;
-	}
-
-	public void setGenerationEntry(GenerationEntry generationEntry) {
-		this.generationEntry = generationEntry;
 	}
 }

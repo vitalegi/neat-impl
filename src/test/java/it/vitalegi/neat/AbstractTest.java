@@ -12,14 +12,14 @@ import it.vitalegi.neat.impl.util.ContextUtil;
 
 public abstract class AbstractTest {
 
-	protected FeedForward feedForward;
-	protected GenerationServiceImpl generationService;
-	protected SpeciesServiceImpl speciesService;
-	protected GeneServiceImpl geneService;
 	protected CompatibilityDistance compatibilityDistance;
-	protected PlayerFactory playerFactory;
 	protected EvolutionAnalysis evolutionAnalysis;
+	protected FeedForward feedForward;
 	protected GenerationEntry generationEntry;
+	protected GenerationServiceImpl generationService;
+	protected GeneServiceImpl geneService;
+	protected PlayerFactory playerFactory;
+	protected SpeciesServiceImpl speciesService;
 
 	protected void init(ContextUtil context) {
 		feedForward = context.getFeedForward();

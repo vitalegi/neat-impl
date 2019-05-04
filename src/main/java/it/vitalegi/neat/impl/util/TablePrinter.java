@@ -7,9 +7,6 @@ import org.slf4j.Logger;
 
 public class TablePrinter {
 
-	public static final int LEFT = -1;
-	public static final int RIGHT = 1;
-
 	private class Row {
 
 		List<String> values;
@@ -18,6 +15,9 @@ public class TablePrinter {
 			this.values = values;
 		}
 	}
+	public static final int LEFT = -1;
+
+	public static final int RIGHT = 1;
 
 	public static TablePrinter newPrinter() {
 		TablePrinter printer = new TablePrinter();
@@ -26,11 +26,11 @@ public class TablePrinter {
 		return printer;
 	}
 
+	private List<Integer> alignments;
+
 	private Row headers;
 
 	private List<Row> rows;
-
-	private List<Integer> alignments;
 
 	public void addRow(List<String> row) {
 		rows.add(new Row(row));
@@ -44,26 +44,19 @@ public class TablePrinter {
 		}
 	}
 
-	private int[] getWidths() {
-		int[] widths = new int[headers.values.size()];
-		computeWidths(widths, headers);
-		rows.forEach(r -> computeWidths(widths, r));
-		return widths;
-	}
-
-	public void log(Logger log) {
-		if (log.isDebugEnabled()) {
-			int[] widths = getWidths();
-			log.debug(getHorizontalBar(widths));
-			log.debug(getRow(headers, widths, getAlignments()));
-			log.debug(getHorizontalBar(widths));
-			rows.forEach(r -> log.debug(getRow(r, widths, getAlignments())));
-			log.debug(getHorizontalBar(widths));
-		}
-	}
-
 	private int[] getAlignments() {
 		return alignments.stream().mapToInt(i -> i).toArray();
+	}
+
+	private String getHorizontalBar(int[] widths) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < widths.length; i++) {
+			sb.append("+-");
+			sb.append(StringUtil.leftPadding("-", widths[i], '-'));
+			sb.append("-");
+		}
+		sb.append("+");
+		return sb.toString();
 	}
 
 	private String getRow(Row row, int[] widths, int[] alignments) {
@@ -87,22 +80,29 @@ public class TablePrinter {
 		return sb.toString();
 	}
 
-	private String getHorizontalBar(int[] widths) {
-		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < widths.length; i++) {
-			sb.append("+-");
-			sb.append(StringUtil.leftPadding("-", widths[i], '-'));
-			sb.append("-");
-		}
-		sb.append("+");
-		return sb.toString();
+	private int[] getWidths() {
+		int[] widths = new int[headers.values.size()];
+		computeWidths(widths, headers);
+		rows.forEach(r -> computeWidths(widths, r));
+		return widths;
 	}
 
-	public void setHeaders(List<String> headers) {
-		this.headers = new Row(headers);
+	public void log(Logger log) {
+		if (log.isDebugEnabled()) {
+			int[] widths = getWidths();
+			log.debug(getHorizontalBar(widths));
+			log.debug(getRow(headers, widths, getAlignments()));
+			log.debug(getHorizontalBar(widths));
+			rows.forEach(r -> log.debug(getRow(r, widths, getAlignments())));
+			log.debug(getHorizontalBar(widths));
+		}
 	}
 
 	public void setAlignments(List<Integer> alignments) {
 		this.alignments = alignments;
+	}
+
+	public void setHeaders(List<String> headers) {
+		this.headers = new Row(headers);
 	}
 }

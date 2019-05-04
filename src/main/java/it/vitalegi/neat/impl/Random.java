@@ -40,8 +40,8 @@ public class Random {
 	}
 
 	/**
-	 * restituisce un indice dell'array, selezionato in modo casuale, pesando
-	 * con i valori dell'array
+	 * restituisce un indice dell'array, selezionato in modo casuale, pesando con i
+	 * valori dell'array
 	 *
 	 * @param weights
 	 * @return

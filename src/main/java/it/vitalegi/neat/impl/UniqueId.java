@@ -13,6 +13,17 @@ public class UniqueId {
 		ids = new HashMap<>();
 	}
 
+	public void clearConnectionIds() {
+		Pattern pattern = Pattern.compile(Connection.class.getName() + "_\\d+_\\d+");
+		Iterator<String> it = ids.keySet().iterator();
+		while (it.hasNext()) {
+			String k = it.next();
+			if (pattern.matcher(k).matches()) {
+				it.remove();
+			}
+		}
+	}
+
 	private long get(String key) {
 		Long v = ids.get(key);
 		if (v == null) {
@@ -47,17 +58,6 @@ public class UniqueId {
 		update(name1, Math.max(id, get(name1)));
 		update(name2, id);
 		return id;
-	}
-
-	public void clearConnectionIds() {
-		Pattern pattern = Pattern.compile(Connection.class.getName() + "_\\d+_\\d+");
-		Iterator<String> it = ids.keySet().iterator();
-		while (it.hasNext()) {
-			String k = it.next();
-			if (pattern.matcher(k).matches()) {
-				it.remove();
-			}
-		}
 	}
 
 	public long nextGeneId() {

@@ -40,6 +40,13 @@ public class Species {
 		return id;
 	}
 
+	public double getLastFitness() {
+		if (getHistoryBestFitnesses().isEmpty()) {
+			return 0;
+		}
+		return getHistoryBestFitnesses().get(getHistoryBestFitnesses().size() - 1);
+	}
+
 	public List<Player> getPlayers() {
 		return players;
 	}
@@ -50,13 +57,6 @@ public class Species {
 
 	public int getStartGeneration() {
 		return startGeneration;
-	}
-
-	public double getLastFitness() {
-		if (getHistoryBestFitnesses().isEmpty()) {
-			return 0;
-		}
-		return getHistoryBestFitnesses().get(getHistoryBestFitnesses().size() - 1);
 	}
 
 }

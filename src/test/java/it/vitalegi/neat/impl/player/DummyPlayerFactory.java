@@ -12,9 +12,9 @@ public class DummyPlayerFactory implements PlayerFactory {
 
 	@Autowired
 	FeedForward feedForward;
+	private double fitness;
 	@Autowired
 	GeneServiceImpl geneService;
-	private double fitness;
 
 	@Override
 	public Player newPlayer(Gene gene) {

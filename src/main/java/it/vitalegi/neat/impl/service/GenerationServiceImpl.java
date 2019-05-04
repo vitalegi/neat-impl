@@ -24,12 +24,37 @@ import it.vitalegi.neat.impl.player.PlayerFactory;
 @Service
 public class GenerationServiceImpl {
 
-	Logger log = LoggerFactory.getLogger(GenerationServiceImpl.class);
-
-	@Autowired
-	SpeciesServiceImpl speciesService;
 	@Autowired
 	GeneServiceImpl geneService;
+
+	Logger log = LoggerFactory.getLogger(GenerationServiceImpl.class);
+	@Autowired
+	SpeciesServiceImpl speciesService;
+
+	public Species addPlayer(Generation gen, Player player) {
+		Species compatible = getCompatibleSpecies(gen, player);
+		if (compatible == null) {
+			compatible = speciesService.newInstance(gen.getUniqueId().nextSpeciesId(), gen.getGenNumber());
+			addSpecies(gen, compatible);
+		}
+		addPlayer(gen, player, compatible);
+		return compatible;
+	}
+
+	protected void addPlayer(Generation gen, Player player, Species species) {
+		gen.getPlayers().add(player);
+		species.addPlayer(player);
+	}
+
+	protected void addSpecies(Generation gen, Species species) {
+		gen.getSpecies().add(species);
+	}
+
+	public void computeFitnesses(Generation gen) {
+		gen.getSpecies().forEach(s -> {
+			s.addFitness(speciesService.getChampion(s).getFitness());
+		});
+	}
 
 	public Generation createGen0(PlayerFactory factory, int inputs, int outputs, int biases, int size) {
 		Generation gen = new Generation(new UniqueId(), factory, 0);
@@ -59,31 +84,6 @@ public class GenerationServiceImpl {
 			addPlayer(gen, player);
 		}
 		return gen;
-	}
-
-	public Species addPlayer(Generation gen, Player player) {
-		Species compatible = getCompatibleSpecies(gen, player);
-		if (compatible == null) {
-			compatible = speciesService.newInstance(gen.getUniqueId().nextSpeciesId(), gen.getGenNumber());
-			addSpecies(gen, compatible);
-		}
-		addPlayer(gen, player, compatible);
-		return compatible;
-	}
-
-	protected void addPlayer(Generation gen, Player player, Species species) {
-		gen.getPlayers().add(player);
-		species.addPlayer(player);
-	}
-
-	protected void addSpecies(Generation gen, Species species) {
-		gen.getSpecies().add(species);
-	}
-
-	public void computeFitnesses(Generation gen) {
-		gen.getSpecies().forEach(s -> {
-			s.addFitness(speciesService.getChampion(s).getFitness());
-		});
 	}
 
 	protected List<Player> getBestPlayers(Generation gen, Species species) {
@@ -141,11 +141,33 @@ public class GenerationServiceImpl {
 		return gen.getFactory().newPlayer(offspring);
 	}
 
+	protected Player getRandomPlayer(List<Player> players) {
+		Map<Long, List<Player>> map = new HashMap<>();
+		map.put(1L, players);
+		return getRandomPlayer(map);
+	}
+
 	protected Player getRandomPlayer(List<Player> players, double[] weights) {
 
 		int selectedIndex = Random.nextRandom(weights);
 
 		return players.get(selectedIndex);
+	}
+
+	protected Player getRandomPlayer(Map<Long, List<Player>> players) {
+		int size = players.values().stream().mapToInt(List::size).sum();
+		double[] weights = new double[size];
+		List<Player> flatList = new ArrayList<>(size);
+
+		int index = 0;
+		for (List<Player> ps : players.values()) {
+			for (Player p : ps) {
+				weights[index] = SharedFitnessValue.getFitness(p, ps.size());
+				flatList.add(index, p);
+				index++;
+			}
+		}
+		return getRandomPlayer(flatList, weights);
 	}
 
 	protected List<Player> getRandomSpecies(Map<Long, List<Player>> players) {
@@ -163,28 +185,6 @@ public class GenerationServiceImpl {
 		int selectedIndex = Random.nextRandom(weights);
 
 		return collapse.get(selectedIndex);
-	}
-
-	protected Player getRandomPlayer(List<Player> players) {
-		Map<Long, List<Player>> map = new HashMap<>();
-		map.put(1L, players);
-		return getRandomPlayer(map);
-	}
-
-	protected Player getRandomPlayer(Map<Long, List<Player>> players) {
-		int size = players.values().stream().mapToInt(List::size).sum();
-		double[] weights = new double[size];
-		List<Player> flatList = new ArrayList<>(size);
-
-		int index = 0;
-		for (List<Player> ps : players.values()) {
-			for (Player p : ps) {
-				weights[index] = SharedFitnessValue.getFitness(p, ps.size());
-				flatList.add(index, p);
-				index++;
-			}
-		}
-		return getRandomPlayer(flatList, weights);
 	}
 
 	protected Species getSpeciesFromPlayer(Generation gen, Player player) {
@@ -215,20 +215,6 @@ public class GenerationServiceImpl {
 				collect(Collectors.toList());
 	}
 
-	protected boolean isPreservableSpecies(Generation gen, Species s) {
-		if (isTopScoreSpecies(gen, s)) {
-			return true;
-		}
-		// first generations, randomize
-		if (gen.getGenNumber() < Generation.YOUNG_GEN) {
-			return Random.nextBoolean(0.5);
-		}
-		if (isYoung(gen, s)) {
-			return true;
-		}
-		return hasMinimumGrowth(gen, s);
-	}
-
 	public boolean hasMinimumGrowth(Generation gen, Species species) {
 
 		double currFitness = species.getLastFitness();
@@ -251,6 +237,20 @@ public class GenerationServiceImpl {
 			log.debug("Specie {} ha crescita minima, la mantengo.", species.getId());
 		}
 		return true;
+	}
+
+	protected boolean isPreservableSpecies(Generation gen, Species s) {
+		if (isTopScoreSpecies(gen, s)) {
+			return true;
+		}
+		// first generations, randomize
+		if (gen.getGenNumber() < Generation.YOUNG_GEN) {
+			return Random.nextBoolean(0.5);
+		}
+		if (isYoung(gen, s)) {
+			return true;
+		}
+		return hasMinimumGrowth(gen, s);
 	}
 
 	protected boolean isTopScoreSpecies(Generation gen, Species species) {
@@ -330,6 +330,14 @@ public class GenerationServiceImpl {
 		return nextSpeciesGen;
 	}
 
+	public void setGeneService(GeneServiceImpl geneService) {
+		this.geneService = geneService;
+	}
+
+	public void setSpeciesService(SpeciesServiceImpl speciesService) {
+		this.speciesService = speciesService;
+	}
+
 	public String stringify(Generation gen) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("GEN: " + gen.getGenNumber() + "\n");
@@ -348,14 +356,6 @@ public class GenerationServiceImpl {
 			});
 		});
 		return sb.toString();
-	}
-
-	public void setSpeciesService(SpeciesServiceImpl speciesService) {
-		this.speciesService = speciesService;
-	}
-
-	public void setGeneService(GeneServiceImpl geneService) {
-		this.geneService = geneService;
 	}
 
 }

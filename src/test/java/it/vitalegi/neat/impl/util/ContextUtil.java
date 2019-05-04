@@ -14,15 +14,6 @@ import it.vitalegi.neat.impl.service.SpeciesServiceImpl;
 
 public class ContextUtil {
 
-	FeedForward feedForward;
-	GenerationServiceImpl generationService;
-	SpeciesServiceImpl speciesService;
-	GeneServiceImpl geneService;
-	CompatibilityDistance compatibilityDistance;
-	EvolutionAnalysis evolutionAnalysis;
-	PlayerFactory playerFactory;
-	GenerationEntry generationEntry;
-
 	public static ContextUtil builder() {
 		ContextUtil context = new ContextUtil();
 
@@ -36,26 +27,15 @@ public class ContextUtil {
 
 		return context;
 	}
+	CompatibilityDistance compatibilityDistance;
+	EvolutionAnalysis evolutionAnalysis;
+	FeedForward feedForward;
+	GenerationEntry generationEntry;
+	GenerationServiceImpl generationService;
+	GeneServiceImpl geneService;
+	PlayerFactory playerFactory;
 
-	public ContextUtil feedForward(FeedForward feedForward) {
-		this.feedForward = feedForward;
-		return this;
-	};
-
-	public ContextUtil generationService(GenerationServiceImpl generationService) {
-		this.generationService = generationService;
-		return this;
-	};
-
-	public ContextUtil speciesService(SpeciesServiceImpl speciesService) {
-		this.speciesService = speciesService;
-		return this;
-	};
-
-	public ContextUtil geneService(GeneServiceImpl geneService) {
-		this.geneService = geneService;
-		return this;
-	};
+	SpeciesServiceImpl speciesService;
 
 	public ContextUtil compatibilityDistance(CompatibilityDistance compatibilityDistance) {
 		this.compatibilityDistance = compatibilityDistance;
@@ -67,14 +47,56 @@ public class ContextUtil {
 		return this;
 	};
 
-	public ContextUtil playerFactory(PlayerFactory playerFactory) {
-		this.playerFactory = playerFactory;
+	public ContextUtil feedForward(FeedForward feedForward) {
+		this.feedForward = feedForward;
 		return this;
 	};
 
 	public ContextUtil generationEntry(GenerationEntry generationEntry) {
 		this.generationEntry = generationEntry;
 		return this;
+	};
+
+	public ContextUtil generationService(GenerationServiceImpl generationService) {
+		this.generationService = generationService;
+		return this;
+	};
+
+	public ContextUtil geneService(GeneServiceImpl geneService) {
+		this.geneService = geneService;
+		return this;
+	};
+
+	public CompatibilityDistance getCompatibilityDistance() {
+		return compatibilityDistance;
+	};
+
+	public EvolutionAnalysis getEvolutionAnalysis() {
+		return evolutionAnalysis;
+	}
+
+	public FeedForward getFeedForward() {
+		return feedForward;
+	}
+
+	public GenerationEntry getGenerationEntry() {
+		return generationEntry;
+	}
+
+	public GenerationServiceImpl getGenerationService() {
+		return generationService;
+	}
+
+	public GeneServiceImpl getGeneService() {
+		return geneService;
+	}
+
+	public PlayerFactory getPlayerFactory() {
+		return playerFactory;
+	}
+
+	public SpeciesServiceImpl getSpeciesService() {
+		return speciesService;
 	}
 
 	public ContextUtil inject() {
@@ -83,12 +105,12 @@ public class ContextUtil {
 		}
 
 		if (generationService instanceof GenerationServiceImpl) {
-			((GenerationServiceImpl) generationService).setGeneService(geneService);
-			((GenerationServiceImpl) generationService).setSpeciesService(speciesService);
+			generationService.setGeneService(geneService);
+			generationService.setSpeciesService(speciesService);
 		}
 
 		if (speciesService instanceof SpeciesServiceImpl) {
-			((SpeciesServiceImpl) speciesService).setCompatibilityDistance(compatibilityDistance);
+			speciesService.setCompatibilityDistance(compatibilityDistance);
 		}
 
 		if (geneService instanceof GeneServiceImpl) {
@@ -97,50 +119,28 @@ public class ContextUtil {
 			((CompatibilityDistanceImpl) compatibilityDistance).setGeneService(geneService);
 		}
 		if (evolutionAnalysis instanceof EvolutionAnalysis) {
-			((EvolutionAnalysis) evolutionAnalysis).setGenerationEntry(generationEntry);
-			((EvolutionAnalysis) evolutionAnalysis).setGeneService(geneService);
+			evolutionAnalysis.setGenerationEntry(generationEntry);
+			evolutionAnalysis.setGeneService(geneService);
 		}
 		if (playerFactory != null && playerFactory instanceof XorPlayerFactory) {
 			((XorPlayerFactory) playerFactory).setFeedForward(feedForward);
 			((XorPlayerFactory) playerFactory).setGeneService(geneService);
 		}
 		if (generationEntry instanceof GenerationEntry) {
-			((GenerationEntry) generationEntry).setGeneService(geneService);
-			((GenerationEntry) generationEntry).setCompatibilityDistance(compatibilityDistance);
+			generationEntry.setGeneService(geneService);
+			generationEntry.setCompatibilityDistance(compatibilityDistance);
 		}
 		return this;
 	}
 
-	public FeedForward getFeedForward() {
-		return feedForward;
+	public ContextUtil playerFactory(PlayerFactory playerFactory) {
+		this.playerFactory = playerFactory;
+		return this;
 	}
 
-	public GenerationServiceImpl getGenerationService() {
-		return generationService;
-	}
-
-	public SpeciesServiceImpl getSpeciesService() {
-		return speciesService;
-	}
-
-	public GeneServiceImpl getGeneService() {
-		return geneService;
-	}
-
-	public CompatibilityDistance getCompatibilityDistance() {
-		return compatibilityDistance;
-	}
-
-	public EvolutionAnalysis getEvolutionAnalysis() {
-		return evolutionAnalysis;
-	}
-
-	public PlayerFactory getPlayerFactory() {
-		return playerFactory;
-	}
-
-	public GenerationEntry getGenerationEntry() {
-		return generationEntry;
+	public ContextUtil speciesService(SpeciesServiceImpl speciesService) {
+		this.speciesService = speciesService;
+		return this;
 	}
 
 }

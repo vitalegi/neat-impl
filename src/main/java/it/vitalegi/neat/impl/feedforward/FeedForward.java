@@ -4,7 +4,7 @@ import it.vitalegi.neat.impl.Gene;
 
 public interface FeedForward {
 
-	double[] initInputs(double[] inputs, double[] biases);
-
 	double[] feedForward(Gene gene, double[] inputs);
+
+	double[] initInputs(double[] inputs, double[] biases);
 }

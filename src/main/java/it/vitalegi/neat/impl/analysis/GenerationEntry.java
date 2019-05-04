@@ -23,10 +23,16 @@ import it.vitalegi.neat.impl.util.Pair;
 public class GenerationEntry {
 
 	@Autowired
-	GeneServiceImpl geneService;
+	CompatibilityDistance compatibilityDistance;
 
 	@Autowired
-	CompatibilityDistance compatibilityDistance;
+	GeneServiceImpl geneService;
+
+	private DoubleStream getAvgWeightDiff(Generation generation) {
+
+		return getOperationStream(generation, (g1,
+				g2) -> (double) geneService.getAvgWeightDifference(g1, g2, geneService.getMatchingGenesCount(g1, g2)));
+	}
 
 	public List<Pair<String, Metric>> getColumns() {
 		List<Pair<String, Metric>> columns = new ArrayList<>();
@@ -142,6 +148,11 @@ public class GenerationEntry {
 				.mapToDouble(Connection::getWeight);
 	}
 
+	private DoubleStream getDisjointGenes(Generation generation) {
+
+		return getOperationStream(generation, (g1, g2) -> (double) geneService.getDisjointGenesCount(g1, g2));
+	}
+
 	private DoubleStream getDistanceStream(Generation generation) {
 
 		return getOperationStream(generation, (g1, g2) -> compatibilityDistance.getDistance(g1, g2));
@@ -150,17 +161,6 @@ public class GenerationEntry {
 	private DoubleStream getMatchingGenes(Generation generation) {
 
 		return getOperationStream(generation, (g1, g2) -> (double) geneService.getMatchingGenesCount(g1, g2));
-	}
-
-	private DoubleStream getDisjointGenes(Generation generation) {
-
-		return getOperationStream(generation, (g1, g2) -> (double) geneService.getDisjointGenesCount(g1, g2));
-	}
-
-	private DoubleStream getAvgWeightDiff(Generation generation) {
-
-		return getOperationStream(generation, (g1,
-				g2) -> (double) geneService.getAvgWeightDifference(g1, g2, geneService.getMatchingGenesCount(g1, g2)));
 	}
 
 	private DoubleStream getOperationStream(Generation generation, BiFunction<Gene, Gene, Double> function) {
@@ -173,11 +173,11 @@ public class GenerationEntry {
 						.mapToDouble(gene2 -> function.apply(gene1, gene2)));
 	}
 
-	public void setGeneService(GeneServiceImpl geneService) {
-		this.geneService = geneService;
-	}
-
 	public void setCompatibilityDistance(CompatibilityDistance compatibilityDistance) {
 		this.compatibilityDistance = compatibilityDistance;
+	}
+
+	public void setGeneService(GeneServiceImpl geneService) {
+		this.geneService = geneService;
 	}
 }

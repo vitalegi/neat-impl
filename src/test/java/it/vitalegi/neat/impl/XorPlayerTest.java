@@ -49,9 +49,11 @@ public class XorPlayerTest extends AbstractTest {
 
 	public void trainNetwork(int generations, int population, double[] biases, double deltaT, double c1, double c2,
 			boolean enableLog) {
-		init(ContextUtil.builder().playerFactory(new XorPlayerFactory(biases)).inject());
+		init(ContextUtil.builder()//
+				.playerFactory(new XorPlayerFactory(biases))//
+				.compatibilityDistance(new CompatibilityDistanceImpl(deltaT, c1, c2))//
+				.inject());
 
-		CompatibilityDistance cd = new CompatibilityDistanceImpl(deltaT, c1, c2);
 		generation = generationService.createGen0(playerFactory, 2 + biases.length, 1, 0, population);
 
 		List<Generation> gens = new ArrayList<>();
