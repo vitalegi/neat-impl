@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import it.vitalegi.neat.impl.Connection;
 import it.vitalegi.neat.impl.Generation;
 import it.vitalegi.neat.impl.player.Player;
-import it.vitalegi.neat.impl.service.GeneServiceImpl;
+import it.vitalegi.neat.impl.service.GeneService;
 import it.vitalegi.neat.impl.util.Pair;
 import it.vitalegi.neat.impl.util.StringUtil;
 import it.vitalegi.neat.impl.util.TablePrinter;
@@ -24,9 +24,9 @@ public class EvolutionAnalysis {
 	GenerationEntry generationEntry;
 
 	@Autowired
-	GeneServiceImpl geneService;
+	GeneService geneService;
 
-	public void getNetworks(List<Generation> generations, double[] inputs, double[] biases, Logger log) {
+	public void getNetworks(List<Generation> generations, Logger log) {
 		TablePrinter printer = TablePrinter.newPrinter();
 		printer.setHeaders(Arrays.asList("Gen", "Score", "Graphs"));
 
@@ -78,7 +78,7 @@ public class EvolutionAnalysis {
 		this.generationEntry = generationEntry;
 	}
 
-	public void setGeneService(GeneServiceImpl geneService) {
+	public void setGeneService(GeneService geneService) {
 		this.geneService = geneService;
 	}
 }

@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import it.vitalegi.neat.impl.Gene;
-import it.vitalegi.neat.impl.service.GeneServiceImpl;
+import it.vitalegi.neat.impl.service.GeneService;
 
 @Service
 public class CompatibilityDistanceImpl implements CompatibilityDistance {
@@ -14,7 +14,7 @@ public class CompatibilityDistanceImpl implements CompatibilityDistance {
 	protected double c2;
 	protected double deltaT;
 	@Autowired
-	GeneServiceImpl geneService;
+	GeneService geneService;
 
 	public CompatibilityDistanceImpl() {
 		super();
@@ -73,7 +73,7 @@ public class CompatibilityDistanceImpl implements CompatibilityDistance {
 		this.deltaT = deltaT;
 	}
 
-	public void setGeneService(GeneServiceImpl geneService) {
+	public void setGeneService(GeneService geneService) {
 		this.geneService = geneService;
 	}
 

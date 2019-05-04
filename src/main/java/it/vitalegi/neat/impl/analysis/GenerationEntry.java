@@ -16,7 +16,7 @@ import it.vitalegi.neat.impl.Generation;
 import it.vitalegi.neat.impl.Species;
 import it.vitalegi.neat.impl.function.CompatibilityDistance;
 import it.vitalegi.neat.impl.player.Player;
-import it.vitalegi.neat.impl.service.GeneServiceImpl;
+import it.vitalegi.neat.impl.service.GeneService;
 import it.vitalegi.neat.impl.util.Pair;
 
 @Service
@@ -26,7 +26,7 @@ public class GenerationEntry {
 	CompatibilityDistance compatibilityDistance;
 
 	@Autowired
-	GeneServiceImpl geneService;
+	GeneService geneService;
 
 	private DoubleStream getAvgWeightDiff(Generation generation) {
 
@@ -177,7 +177,7 @@ public class GenerationEntry {
 		this.compatibilityDistance = compatibilityDistance;
 	}
 
-	public void setGeneService(GeneServiceImpl geneService) {
+	public void setGeneService(GeneService geneService) {
 		this.geneService = geneService;
 	}
 }

@@ -18,13 +18,13 @@ import org.springframework.stereotype.Service;
 import it.vitalegi.neat.impl.Connection;
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.Node;
-import it.vitalegi.neat.impl.service.GeneServiceImpl;
+import it.vitalegi.neat.impl.service.GeneService;
 
 @Service
 public class FeedForwardImpl implements FeedForward {
 
 	@Autowired
-	GeneServiceImpl geneService;
+	GeneService geneService;
 
 	Logger log = LoggerFactory.getLogger(FeedForwardImpl.class);
 
@@ -196,7 +196,7 @@ public class FeedForwardImpl implements FeedForward {
 		throw new RuntimeException("Loop detected.");
 	}
 
-	public void setGeneService(GeneServiceImpl geneService) {
+	public void setGeneService(GeneService geneService) {
 		this.geneService = geneService;
 	}
 

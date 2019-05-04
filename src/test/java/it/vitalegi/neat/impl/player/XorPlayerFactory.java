@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.feedforward.FeedForward;
-import it.vitalegi.neat.impl.service.GeneServiceImpl;
+import it.vitalegi.neat.impl.service.GeneService;
 
 @Service
 public class XorPlayerFactory implements PlayerFactory {
@@ -15,7 +15,7 @@ public class XorPlayerFactory implements PlayerFactory {
 	FeedForward feedForward;
 	private int generation;
 	@Autowired
-	GeneServiceImpl geneService;
+	GeneService geneService;
 
 	public XorPlayerFactory(double[] biases) {
 		super();
@@ -37,7 +37,7 @@ public class XorPlayerFactory implements PlayerFactory {
 		this.generation = generation;
 	}
 
-	public void setGeneService(GeneServiceImpl geneService) {
+	public void setGeneService(GeneService geneService) {
 		this.geneService = geneService;
 	}
 }

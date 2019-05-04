@@ -5,9 +5,6 @@ import java.util.List;
 
 public class Gene {
 
-	public static final double MAX_WEIGHT = 10;
-	public static final double MIN_WEIGHT = -10;
-
 	protected List<Connection> connections;
 
 	protected long id;

@@ -1,22 +1,13 @@
 package it.vitalegi.neat.impl.service;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.anyDouble;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,8 +21,6 @@ import it.vitalegi.neat.impl.Random;
 import it.vitalegi.neat.impl.Species;
 import it.vitalegi.neat.impl.UniqueId;
 import it.vitalegi.neat.impl.function.CompatibilityDistance;
-import it.vitalegi.neat.impl.function.CompatibilityDistanceImpl;
-import it.vitalegi.neat.impl.player.DummyPlayer;
 import it.vitalegi.neat.impl.player.DummyPlayerFactory;
 import it.vitalegi.neat.impl.player.Player;
 import it.vitalegi.neat.impl.util.ContextUtil;
@@ -74,20 +63,6 @@ public class GenerationServiceTest extends AbstractTest {
 		Assert.assertEquals(1, species1.getHistoryBestFitnesses().size());
 		Assert.assertEquals(12, species1.getLastFitness(), 0.1);
 
-	}
-
-	@Test
-	public void testGenerationInitializer() {
-
-		Generation gen = generationService.createGen0(playerFactory, 2, 1, 0, 5);
-		log.info(generationService.stringify(gen));
-		Gene gene2 = geneService.newInstance(generation.getUniqueId(), 2, 1);
-		geneService.addConnection(gene2, geneService.getSortedInputNodes(gene2).get(0),
-				geneService.getSortedOutputNodes(gene2).get(0), 1, true);
-		geneService.addConnection(gene2, geneService.getSortedInputNodes(gene2).get(1),
-				geneService.getSortedOutputNodes(gene2).get(0), 1, true);
-		generationService.addPlayer(gen, gen.getFactory().newPlayer(gene2));
-		log.info(generationService.stringify(gen));
 	}
 
 	@Test
@@ -170,182 +145,4 @@ public class GenerationServiceTest extends AbstractTest {
 		Assert.assertNull(generationService.getCompatibleSpecies(generation, player1));
 	}
 
-	@Test
-	public void testGetRandomPlayerPreserveWeights() {
-		Map<Long, List<Player>> players = new HashMap<>();
-		players.put(1L, Arrays.asList(new DummyPlayer(feedForward, geneService,
-				geneService.newInstance(generation.getUniqueId(), 0, 0, 0, 0), 1)));
-		players.put(2L, Arrays.asList(new DummyPlayer(feedForward, geneService,
-				geneService.newInstance(generation.getUniqueId(), 1, 0, 0, 0), 99)));
-
-		int[] indexes = new int[2];
-		int sampleSize = 100;
-		for (int i = 0; i < sampleSize; i++) {
-			Player p = generationService.getRandomPlayer(players);
-			indexes[(int) p.getGeneId()]++;
-		}
-		Assert.assertThat(indexes[1], Matchers.greaterThan((int) (0.9 * sampleSize)));
-	}
-
-	@Test
-	public void testGetSpeciesToPreserveShouldPreserveGrowthSpecies() {
-
-		generation.setGenNumber(16);
-		Species species1 = speciesService.newInstance(100, 0);
-		species1.addPlayer(playerFactory.newPlayer(geneService.newInstance(generation.getUniqueId(), 1, 0, 0, 0), 10));
-		generationService.addSpecies(generation, species1);
-		for (int i = 0; i <= 16; i++) {
-			species1.addFitness(i);
-		}
-		Assert.assertEquals(0, speciesService.getFitness(species1, 0), 0.01);
-		Assert.assertEquals(1, speciesService.getFitness(species1, 1), 0.01);
-		Assert.assertEquals(16, speciesService.getFitness(species1, 16), 0.01);
-		Assert.assertTrue(generationService.getSpeciesToPreserve(generation).stream().anyMatch(s -> s.getId() == 100));
-	}
-
-	@Test
-	public void testGetSpeciesToPreserveShouldPreserveYoungSpecies() {
-
-		generation.setGenNumber(5);
-		Species species1 = speciesService.newInstance(100, 6);
-		species1.addPlayer(playerFactory.newPlayer(geneService.newInstance(generation.getUniqueId(), 1, 0, 0, 0), 10));
-		generationService.addSpecies(generation, species1);
-		Assert.assertTrue(generationService.getSpeciesToPreserve(generation).stream().anyMatch(s -> s.getId() == 100));
-	}
-
-	@Test
-	public void testIsTopScoreSpecies() {
-
-		Generation gen = generationService.createGen0(playerFactory, 2, 1, 0, 5);
-
-		Species s1 = speciesService.newInstance(1, 0);
-		s1.getHistoryBestFitnesses().add(100.0);
-		generationService.addSpecies(gen, s1);
-
-		Species s2 = speciesService.newInstance(2, 0);
-		s2.getHistoryBestFitnesses().add(200.0);
-		generationService.addSpecies(gen, s2);
-
-		Species s3 = speciesService.newInstance(3, 0);
-		s3.getHistoryBestFitnesses().add(300.0);
-		generationService.addSpecies(gen, s3);
-
-		Assert.assertTrue(generationService.isTopScoreSpecies(gen, s2));
-		Assert.assertTrue(generationService.isTopScoreSpecies(gen, s3));
-		Assert.assertFalse(generationService.isTopScoreSpecies(gen, s1));
-	}
-
-	@Test
-	public void testIsYoungIf14GenOld() {
-		generation.setGenNumber(30);
-		Species species = speciesService.newInstance(0, 16);
-		generationService.addSpecies(generation, species);
-		Assert.assertTrue(generationService.isYoung(generation, species));
-	}
-
-	@Test
-	public void testIsYoungIf15GenOld() {
-		generation.setGenNumber(30);
-		Species species = speciesService.newInstance(0, 15);
-		generationService.addSpecies(generation, species);
-		Assert.assertTrue(generationService.isYoung(generation, species));
-	}
-
-	@Test
-	public void testIsYoungIf16GenOld() {
-		generation.setGenNumber(30);
-		Species species = speciesService.newInstance(0, 14);
-		generationService.addSpecies(generation, species);
-		Assert.assertFalse(generationService.isYoung(generation, species));
-	}
-
-	@Test
-	public void testNextGeneration() {
-
-		Generation gen = generationService.createGen0(playerFactory, 2, 1, 0, 5);
-		log.info(generationService.stringify(gen));
-		Generation nextGen = generationService.nextGeneration(gen);
-		log.info(generationService.stringify(nextGen));
-	}
-
-	@Test
-	public void testPreserveSpeciesShouldCopyChampionIfRelevantSpecies() {
-
-		GeneServiceImpl gs = mock(GeneServiceImpl.class);
-
-		init(ContextUtil.builder()//
-				.compatibilityDistance(new CompatibilityDistanceImpl(0.1, 1, 2))//
-				.speciesService(new SpeciesServiceImpl() {
-					@Override
-					public boolean isRelevantSpecies(Species s) {
-						return true;
-					}
-				})//
-				.geneService(gs)//
-				.inject());
-
-		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1);
-
-		Gene gene = new Gene(targetGen.getUniqueId(), targetGen.getUniqueId().nextGeneId());
-
-		Species oldSpecies = new Species(1, 0);
-
-		generationService.preserveSpecies(targetGen, oldSpecies, gene);
-
-		verify(geneService, times(0))//
-				.mutate(any(Gene.class), anyDouble(), anyDouble(), anyDouble(), anyDouble());
-	}
-
-	@Test
-	public void testPreserveSpeciesShouldCreateSpecies() {
-
-		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1);
-
-		Gene gene = geneService.newInstance(generation.getUniqueId(), 2, 1);
-		geneService.addConnection(gene, geneService.getSortedInputNodes(gene).get(0),
-				geneService.getSortedOutputNodes(gene).get(0), 1, true);
-		geneService.addConnection(gene, geneService.getSortedInputNodes(gene).get(1),
-				geneService.getSortedOutputNodes(gene).get(0), 1, true);
-
-		Species oldSpecies = speciesService.newInstance(1, 0);
-
-		generationService.preserveSpecies(targetGen, oldSpecies, gene);
-		Assert.assertEquals(1, targetGen.getSpecies().size());
-		Assert.assertEquals(oldSpecies.getId(), targetGen.getSpecies().get(0).getId());
-
-	}
-
-	@Test
-	public void testPreserveSpeciesShouldMutateChampionIfIrrelevantSpecies() {
-		GeneServiceImpl gs = mock(GeneServiceImpl.class);
-
-		init(ContextUtil.builder()//
-				.compatibilityDistance(new CompatibilityDistanceImpl(0.1, 1, 2))//
-				.speciesService(new SpeciesServiceImpl() {
-					@Override
-					public boolean isRelevantSpecies(Species s) {
-						return false;
-					}
-				})//
-				.generationService(new GenerationServiceImpl() {
-					@Override
-					protected boolean isTopScoreSpecies(Generation gen, Species species) {
-						return false;
-					}
-				}).geneService(gs)//
-				.inject());
-
-		Generation targetGen = new Generation(new UniqueId(), playerFactory, 1);
-
-		Gene gene = new Gene(targetGen.getUniqueId(), targetGen.getUniqueId().nextGeneId());
-
-		Species oldSpecies = new Species(1, 0);
-
-		when(gs.clone(gene)).thenReturn(gene);
-
-		generationService.preserveSpecies(targetGen, oldSpecies, gene);
-
-		verify(geneService, times(1))//
-				.mutate(any(Gene.class), anyDouble(), anyDouble(), anyDouble(), anyDouble());
-	}
 }

@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.feedforward.FeedForward;
-import it.vitalegi.neat.impl.service.GeneServiceImpl;
+import it.vitalegi.neat.impl.service.GeneService;
 
 @Service
 public class DummyPlayerFactory implements PlayerFactory {
@@ -14,7 +14,7 @@ public class DummyPlayerFactory implements PlayerFactory {
 	FeedForward feedForward;
 	private double fitness;
 	@Autowired
-	GeneServiceImpl geneService;
+	GeneService geneService;
 
 	@Override
 	public Player newPlayer(Gene gene) {

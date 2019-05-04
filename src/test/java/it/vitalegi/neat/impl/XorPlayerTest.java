@@ -5,7 +5,6 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -15,7 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import it.vitalegi.neat.AbstractTest;
-import it.vitalegi.neat.impl.function.CompatibilityDistance;
 import it.vitalegi.neat.impl.function.CompatibilityDistanceImpl;
 import it.vitalegi.neat.impl.player.Player;
 import it.vitalegi.neat.impl.player.XorPlayer;
@@ -38,13 +36,13 @@ public class XorPlayerTest extends AbstractTest {
 	protected Generation perform(Generation generation) {
 		generation.getPlayers().stream().map(p -> (XorPlayer) p).forEach(XorPlayer::execute);
 		generationService.computeFitnesses(generation);
-		return generationService.nextGeneration(generation);
+		return nextGenerationService.nextGeneration(neatConfig, generation);
 	}
 
-	@Ignore
+	// @Ignore
 	@Test
 	public void testXor() {
-		trainNetwork(150, 100, new double[] { 1, -1 }, 3, 1.4, 1.8, true);
+		trainNetwork(150, 100, new double[] { 1 }, 3, 1.4, 1.8, true);
 	}
 
 	public void trainNetwork(int generations, int population, double[] biases, double deltaT, double c1, double c2,
@@ -54,7 +52,7 @@ public class XorPlayerTest extends AbstractTest {
 				.compatibilityDistance(new CompatibilityDistanceImpl(deltaT, c1, c2))//
 				.inject());
 
-		generation = generationService.createGen0(playerFactory, 2 + biases.length, 1, 0, population);
+		generation = firstGenerationService.create(neatConfig, playerFactory, 2 + biases.length, 1, 0, population);
 
 		List<Generation> gens = new ArrayList<>();
 		for (int i = 0; i < generations; i++) {
@@ -73,7 +71,8 @@ public class XorPlayerTest extends AbstractTest {
 			log.debug(generationService.stringify(generation));
 			evolutionAnalysis.logAnalysis(gens, log);
 			log.debug("Networks");
-			// analysis.getNetworks(new double[] { 1.0, 1.0 }, biases, log);
+
+			evolutionAnalysis.getNetworks(gens, log);
 		}
 		log.info("Best Player {}: ", geneService.stringify(bestPlayer.getGene(), true));
 		bestPlayer.assertPerfect();

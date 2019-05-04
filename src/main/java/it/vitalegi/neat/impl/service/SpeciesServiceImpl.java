@@ -9,17 +9,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import it.vitalegi.neat.impl.Generation;
 import it.vitalegi.neat.impl.Species;
+import it.vitalegi.neat.impl.configuration.NeatConfig;
 import it.vitalegi.neat.impl.function.CompatibilityDistance;
 import it.vitalegi.neat.impl.player.Player;
 
 @Service
-public class SpeciesServiceImpl {
+public class SpeciesServiceImpl implements SpeciesService {
 	@Autowired
 	CompatibilityDistance compatibilityDistance;
 	Logger log = LoggerFactory.getLogger(SpeciesServiceImpl.class);
 
+	@Override
 	public List<Player> getBestPlayers(Species species, int size) {
 		if (log.isDebugEnabled()) {
 			if (size < species.getPlayers().size()) {
@@ -34,12 +35,14 @@ public class SpeciesServiceImpl {
 				.collect(Collectors.toList());
 	}
 
+	@Override
 	public Player getChampion(Species species) {
 		return species.getPlayers().stream()//
 				.sorted(Comparator.comparing(Player::getFitness).reversed())//
 				.findFirst().orElse(null);
 	}
 
+	@Override
 	public double getFitness(Species species, int generation) {
 		if (generation < species.getStartGeneration()) {
 			throw new IllegalArgumentException(
@@ -54,18 +57,22 @@ public class SpeciesServiceImpl {
 		return species.getHistoryBestFitnesses().get(relativeGeneration);
 	}
 
+	@Override
 	public Player getPlayerByGeneId(Species species, long id) {
 		return species.getPlayers().stream().filter(p -> p.getGeneId() == id).findFirst().orElse(null);
 	}
 
+	@Override
 	public boolean isCompatible(Species species, Player player) {
 		return compatibilityDistance.isCompatible(species.getRepresentative().getGene(), player.getGene());
 	}
 
-	public boolean isRelevantSpecies(Species species) {
-		return species.getPlayers().size() >= Generation.MIN_SPECIES_SIZE_TO_BE_RELEVANT;
+	@Override
+	public boolean isRelevantSpecies(NeatConfig config, Species species) {
+		return species.getPlayers().size() >= config.getMinSpeciesSizeToBeRelevant();
 	}
 
+	@Override
 	public Species newInstance(long id, int startGeneration) {
 		return new Species(id, startGeneration);
 	}

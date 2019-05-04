@@ -7,7 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.feedforward.FeedForward;
-import it.vitalegi.neat.impl.service.GeneServiceImpl;
+import it.vitalegi.neat.impl.service.GeneService;
 
 public abstract class AbstractPlayer implements Player {
 
@@ -17,8 +17,9 @@ public abstract class AbstractPlayer implements Player {
 
 	protected Gene gene;
 
-	GeneServiceImpl geneService;
-	public AbstractPlayer(FeedForward feedForward, GeneServiceImpl geneService) {
+	GeneService geneService;
+
+	public AbstractPlayer(FeedForward feedForward, GeneService geneService) {
 		this.feedForward = feedForward;
 		this.geneService = geneService;
 	}
@@ -58,7 +59,7 @@ public abstract class AbstractPlayer implements Player {
 		return gene.getId();
 	}
 
-	public GeneServiceImpl getGeneService() {
+	public GeneService getGeneService() {
 		return geneService;
 	}
 
