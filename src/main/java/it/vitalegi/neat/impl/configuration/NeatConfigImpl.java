@@ -45,10 +45,6 @@ public class NeatConfigImpl implements NeatConfig {
 	 */
 	protected double mutateProbability;
 	/**
-	 * probability to remove a node
-	 */
-	protected double mutateRemoveNodeProbability;
-	/**
 	 * percentuale di geni da eliminare ad ogni nuova generazione
 	 */
 	protected double removeLowPerformancesRatio;
@@ -176,18 +172,6 @@ public class NeatConfigImpl implements NeatConfig {
 	 * (non-Javadoc)
 	 *
 	 * @see
-	 * it.vitalegi.neat.impl.configuration.NeatConfig#getMutateRemoveNodeProbability
-	 * ()
-	 */
-	@Override
-	public double getMutateRemoveNodeProbability() {
-		return mutateRemoveNodeProbability;
-	}
-
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see
 	 * it.vitalegi.neat.impl.configuration.NeatConfig#getRemoveLowPerformancesRatio(
 	 * )
 	 */
@@ -265,10 +249,6 @@ public class NeatConfigImpl implements NeatConfig {
 
 	public void setMutateProbability(double mutateProbability) {
 		this.mutateProbability = mutateProbability;
-	}
-
-	public void setMutateRemoveNodeProbability(double mutateRemoveNodeProbability) {
-		this.mutateRemoveNodeProbability = mutateRemoveNodeProbability;
 	}
 
 	public void setRemoveLowPerformancesRatio(double removeLowPerformancesRatio) {

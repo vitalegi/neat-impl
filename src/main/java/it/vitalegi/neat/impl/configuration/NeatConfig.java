@@ -22,8 +22,6 @@ public interface NeatConfig {
 
 	double getMutateProbability();
 
-	double getMutateRemoveNodeProbability();
-
 	double getRemoveLowPerformancesRatio();
 
 	double getUniformPerturbation();

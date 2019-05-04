@@ -1,5 +1,6 @@
 package it.vitalegi.neat.impl.service;
 
+import org.hamcrest.Matchers;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -15,6 +16,8 @@ import it.vitalegi.neat.impl.Gene;
 import it.vitalegi.neat.impl.Node;
 import it.vitalegi.neat.impl.Random;
 import it.vitalegi.neat.impl.UniqueId;
+import it.vitalegi.neat.impl.configuration.NeatConfigFactory;
+import it.vitalegi.neat.impl.function.CompatibilityDistanceImpl;
 import it.vitalegi.neat.impl.util.ContextUtil;
 
 @RunWith(SpringRunner.class)
@@ -157,4 +160,29 @@ public class GeneMutationServiceTest extends AbstractTest {
 		Assert.assertEquals(0, gene1.getConnections().size());
 	}
 
+	@Test
+	public void testMutateUniformWeightsShouldPreserveCompatibility() {
+
+		GeneMutationService predictableGeneMutation = new PredictableGeneMutationService().uniformWeightsPerturbation();
+
+		double delta = 0.2;
+		init(ContextUtil.builder()//
+				.neatConfig(NeatConfigFactory.create()//
+						.maxWeight(1.0)//
+						.minWeight(-1.0)//
+						.uniformPerturbation(0.1)//
+						.build())
+				.compatibilityDistance(new CompatibilityDistanceImpl(delta, 1, 2))//
+				.inject());
+
+		Gene gene1 = geneService.newInstance(uniqueId, 1, 1);
+
+		for (int i = 0; i < 100; i++) {
+			gene1 = geneMutationService.mutate(neatConfig, gene1);
+			Gene gene2 = predictableGeneMutation.mutate(neatConfig, geneService.clone(gene1));
+
+			Assert.assertThat("Iteration " + i, compatibilityDistance.getDistance(gene1, gene2),
+					Matchers.lessThan(delta));
+		}
+	}
 }

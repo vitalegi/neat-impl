@@ -80,25 +80,39 @@ public class GeneMutationServiceImpl implements GeneMutationService {
 		return true;
 	}
 
+	protected boolean isMutateWeights(NeatConfig neatConfig) {
+		return Random.nextBoolean(neatConfig.getMutateProbability());
+	}
+
+	protected boolean isMutateAddRandomNode(NeatConfig neatConfig) {
+		return Random.nextBoolean(neatConfig.getMutateAddNodeProbability());
+	}
+
+	protected boolean isMutateAddRandomConnection(NeatConfig neatConfig) {
+		return Random.nextBoolean(neatConfig.getMutateConnectionProbability());
+	}
+
+	protected boolean isMutateChangeRandomEnableConnection(NeatConfig neatConfig) {
+		return Random.nextBoolean(neatConfig.getMutateEnableProbability());
+	}
+
 	@Override
 	public Gene mutate(NeatConfig neatConfig, Gene gene) {
 
 		// shuffle pesi
-		mutateWeights(neatConfig, gene);
+		if (isMutateWeights(neatConfig)) {
+			mutateWeights(neatConfig, gene);
+		}
 		// aggiunta nodi
-		if (Random.nextBoolean(neatConfig.getMutateAddNodeProbability())) {
+		if (isMutateAddRandomNode(neatConfig)) {
 			mutateAddRandomNode(gene);
 		}
-		// rimozione nodi
-		if (Random.nextBoolean(neatConfig.getMutateRemoveNodeProbability())) {
-			// mutateRemoveRandomNode();
-		}
 		// aggiunta connessioni
-		if (Random.nextBoolean(neatConfig.getMutateConnectionProbability())) {
+		if (isMutateAddRandomConnection(neatConfig)) {
 			mutateAddRandomConnection(neatConfig, gene);
 		}
 		// abilito / disabilito
-		if (Random.nextBoolean(neatConfig.getMutateEnableProbability())) {
+		if (isMutateChangeRandomEnableConnection(neatConfig)) {
 			mutateChangeRandomEnableConnection(gene);
 		}
 		return gene;
@@ -161,7 +175,7 @@ public class GeneMutationServiceImpl implements GeneMutationService {
 		return gene;
 	}
 
-	protected Gene mutateRemoveRandomNode(Gene gene) {
+	private Gene mutateRemoveRandomNode(Gene gene) {
 		Node hiddenNode = getRandomNode(gene, false, false);
 		if (hiddenNode == null) {
 			if (log.isDebugEnabled()) {
@@ -183,19 +197,35 @@ public class GeneMutationServiceImpl implements GeneMutationService {
 		return gene;
 	}
 
+	protected boolean isUniformPerturbation(NeatConfig neatConfig) {
+		return Random.nextBoolean(neatConfig.getUniformPerturbationProbability());
+	}
+
 	protected Gene mutateWeights(NeatConfig neatConfig, Gene gene) {
 
-		if (Random.nextBoolean(neatConfig.getMutateProbability())) {
-			boolean uniform = Random.nextBoolean(neatConfig.getUniformPerturbationProbability());
-			gene.getConnections().forEach(c -> {
-				if (uniform) {
-					c.setWeight(c.getWeight() * (1 + Random.nextDouble(-neatConfig.getUniformPerturbation(),
-							neatConfig.getUniformPerturbation())));
-				} else {
-					c.setWeight(Random.nextDouble(neatConfig.getMinWeight(), neatConfig.getMaxWeight()));
-				}
-			});
+		if (isUniformPerturbation(neatConfig)) {
+			return mutateWeightsUniform(neatConfig, gene);
+		} else {
+			return mutateWeightsRandom(neatConfig, gene);
 		}
+	}
+
+	protected Gene mutateWeightsUniform(NeatConfig neatConfig, Gene gene) {
+
+		for (Connection c : gene.getConnections()) {
+			double variation = Random.nextDouble(-neatConfig.getUniformPerturbation(),
+					neatConfig.getUniformPerturbation());
+			double newWeight = c.getWeight() * (1 + variation);
+			c.setWeight(newWeight);
+		}
+		return gene;
+	}
+
+	protected Gene mutateWeightsRandom(NeatConfig neatConfig, Gene gene) {
+
+		gene.getConnections().forEach(c -> {
+			c.setWeight(Random.nextDouble(neatConfig.getMinWeight(), neatConfig.getMaxWeight()));
+		});
 		return gene;
 	}
 

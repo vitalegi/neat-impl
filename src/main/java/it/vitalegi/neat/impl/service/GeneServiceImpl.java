@@ -171,7 +171,7 @@ public class GeneServiceImpl implements GeneService {
 				return i;
 			}
 		}
-		return 0;
+		return minLen;
 	}
 
 	@Override

@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.slf4j.Logger;
@@ -39,7 +40,7 @@ public class XorPlayerTest extends AbstractTest {
 		return nextGenerationService.nextGeneration(neatConfig, generation);
 	}
 
-	// @Ignore
+	@Ignore
 	@Test
 	public void testXor() {
 		trainNetwork(150, 100, new double[] { 1 }, 3, 1.4, 1.8, true);

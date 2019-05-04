@@ -103,14 +103,14 @@ public class GeneServiceTest extends AbstractTest {
 	}
 
 	@Test
-	public void matchingGenesIfCommonAnchestorNotExistsShouldReturnNegativeNumber() {
+	public void matchingGenesIfCommonAnchestorNotExistsShouldReturnZero() {
 
 		Gene gene1 = geneService.newInstance(uniqueId);
-		geneService.addConnection(gene1, 3, 5, 0.0, true);
+		geneService.addConnection(gene1, 1, 2, 0.0, true);
 
 		Gene gene2 = geneService.newInstance(uniqueId);
+
 		geneService.addConnection(gene2, 3, 5, 0.0, true);
-		geneService.addNode(gene2, 6, geneService.getConnection(gene2, 3, 5));
 
 		int index = geneService.getMatchingGenesCount(gene1, gene2);
 		Assert.assertEquals(0, index);

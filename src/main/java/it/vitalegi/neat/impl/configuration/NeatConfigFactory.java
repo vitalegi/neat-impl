@@ -16,7 +16,6 @@ public class NeatConfigFactory {
 				.mutateAddNodeProbability(0.15)//
 				.mutateConnectionProbability(0.20)//
 				.mutateEnableProbability(0.05)//
-				.mutateRemoveNodeProbability(0)//
 				.removeLowPerformancesRatio(0.1)//
 				.youngGen(15)//
 				.maxWeight(10.0)//
@@ -78,11 +77,6 @@ public class NeatConfigFactory {
 
 	public NeatConfigFactory mutateProbability(double mutateProbability) {
 		neatConfig.setMutateProbability(mutateProbability);
-		return this;
-	}
-
-	public NeatConfigFactory mutateRemoveNodeProbability(double mutateRemoveNodeProbability) {
-		neatConfig.setMutateRemoveNodeProbability(mutateRemoveNodeProbability);
 		return this;
 	}
 
